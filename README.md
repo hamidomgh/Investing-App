@@ -11,12 +11,17 @@ und `AGENTS.md`. Die Rahmenbedingungen für Projekt und Prüfung stehen im Moodl
 2. Vorlage klonen und mit eurem Projekt verbinden:
 
    ```
-   git clone https://gitlab.rz.htw-berlin.de/kerdels/ce23_wise_2026.git meinprojekt
+   git clone git@gitlab.rz.htw-berlin.de:kerdels/ce23_wise_2026.git meinprojekt
    cd meinprojekt
    git remote rename origin vorlage
    git remote add origin <URL eures Projekts>
    git push -u origin main
    ```
+
+   Die Vorlage ist nur für Angemeldete sichtbar. Für `git@...`-Adressen braucht ihr einen
+   SSH-Schlüssel in eurem GitLab-Profil (Einstellungen → SSH-Schlüssel). Alternativ per
+   HTTPS (`https://gitlab.rz.htw-berlin.de/kerdels/ce23_wise_2026.git`) mit einem Personal
+   Access Token (Bereich `read_repository`, `write_repository`) als Passwort.
 
    Die Vorlage bleibt als Remote `vorlage` erhalten. Falls sie im Semester aktualisiert
    wird, holt ihr die Änderungen mit `git pull --no-rebase vorlage main`.

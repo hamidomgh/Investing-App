@@ -30,8 +30,7 @@ RUN git config --system safe.directory /work
 RUN useradd -m -u 1000 -s /bin/bash dev
 USER dev
 ENV HOME=/home/dev \
-    FAUP_DEV=1 \
-    PS1='[faup] \w\$ '
+    FAUP_DEV=1
 
 WORKDIR /work
 CMD ["bash"]

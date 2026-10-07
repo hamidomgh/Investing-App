@@ -1,0 +1,19 @@
+#!/bin/sh
+# Läuft vor jedem Commit: bauen und testen. Schlägt etwas fehl, wird nicht committet.
+# Aktiviert durch: git config core.hooksPath .githooks   (macht ./dev.sh automatisch)
+# Im Notfall überspringen: git commit --no-verify
+#
+# Hinweis: Geprüft wird der Arbeitsstand, nicht nur die gestagten Änderungen.
+
+# Außerhalb des Containers: denselben Hook im Container ausführen
+if [ -z "$FAUP_DEV" ]; then
+    exec ./dev.sh .githooks/pre-commit
+fi
+
+cmake -B build -S . > /dev/null || exit 1
+cmake --build build || exit 1
+ctest --test-dir build --output-on-failure || exit 1
+
+if git diff --cached --name-only | grep -q '^tests/'; then
+    echo "Hinweis: Dieser Commit verändert Tests. Ist das gewollt?"
+fi

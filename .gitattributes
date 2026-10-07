@@ -1,0 +1,4 @@
+# Skripte brauchen Unix-Zeilenenden, auch wenn unter Windows ausgecheckt wird
+*.sh            text eol=lf
+.githooks/*     text eol=lf
+container/*     text eol=lf

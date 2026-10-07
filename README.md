@@ -1,93 +1,116 @@
-# ce23_WiSe_2026
+# Projektvorlage FAUP (WiSe 2026/27)
 
+Vorlage für euer Einzelprojekt: CMake-Grundgerüst mit GoogleTest, Dev-Container mit
+Compiler, Testwerkzeugen und OpenCode, Pre-Commit-Hook sowie Vorlagen für `PROJEKT.md`
+und `AGENTS.md`. Die Rahmenbedingungen für Projekt und Prüfung stehen im Moodle.
 
+## 1. Eigenes Repository anlegen
 
-## Getting started
+1. Auf <https://gitlab.rz.htw-berlin.de> ein **neues, leeres, privates** Projekt anlegen
+   (ohne README).
+2. Vorlage klonen und mit eurem Projekt verbinden:
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+   ```
+   git clone https://gitlab.rz.htw-berlin.de/kerdels/ce23_wise_2026.git meinprojekt
+   cd meinprojekt
+   git remote rename origin vorlage
+   git remote add origin <URL eures Projekts>
+   git push -u origin main
+   ```
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+   Die Vorlage bleibt als Remote `vorlage` erhalten. Falls sie im Semester aktualisiert
+   wird, holt ihr die Änderungen mit `git pull --no-rebase vorlage main`.
 
-## Add your files
+## 2. Dev-Container
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Voraussetzung ist **Podman** oder **Docker**:
+
+- **Linux:** Podman aus den Paketquellen (empfohlen) oder Docker.
+- **macOS:** Podman Desktop oder Docker Desktop.
+- **Windows:** WSL2 mit einer Linux-Distribution (z.B. Ubuntu), darin Podman oder Docker
+  Desktop mit WSL2-Backend. Das Projekt **innerhalb von WSL** klonen
+  (z.B. `~/meinprojekt`), nicht unter `C:\`, und `./dev.sh` in der WSL-Shell ausführen.
+
+Dann im Projektordner:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.rz.htw-berlin.de/kerdels/ce23_wise_2026.git
-git branch -M main
-git push -uf origin main
+./dev.sh
 ```
 
-## Integrate with your tools
+Beim ersten Aufruf wird das Image gebaut (einige Minuten, ca. 1,3 GB). Danach seid ihr in
+einer Shell im Container; euer Projekt liegt unter `/work`. Was ihr dort ändert, ändert
+sich auch auf eurem Rechner, sodass ihr mit eurem gewohnten Editor arbeiten könnt.
 
-* [Set up project integrations](https://gitlab.rz.htw-berlin.de/kerdels/ce23_wise_2026/-/settings/integrations)
+| Befehl | Wirkung |
+|---|---|
+| `./dev.sh` | Shell im Container; ein zweiter Aufruf öffnet eine weitere Shell im selben Container |
+| `./dev.sh <befehl>` | einzelnen Befehl im Container ausführen, z.B. `./dev.sh opencode` |
+| `./dev.sh build` | Image neu bauen (z.B. nach einer Aktualisierung der Vorlage) |
 
-## Collaborate with your team
+Im Container enthalten: GCC 14, Clang 19, CMake, GoogleTest, gdb, gcovr, clang-format,
+clang-tidy, OpenCode.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## 3. Bauen und testen
 
-## Test and Deploy
+Im Container:
 
-Use the built-in continuous integration in GitLab.
+```
+cmake -B build && cmake --build build && ctest --test-dir build
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Genau mit diesen Befehlen wird euer Projekt nach dem Code-Freeze gebaut und getestet.
 
-***
+- Programmlogik gehört in die Bibliothek `projekt_lib` (`src/`), damit Programm und Tests
+  denselben Code nutzen. `src/main.cpp` ist nur der Einstiegspunkt.
+- Tests liegen in `tests/` und nutzen GoogleTest. `tests/test_statistik.cpp` zeigt den
+  Aufbau.
+- Neue `.cpp`-Dateien in `CMakeLists.txt` eintragen.
+- Die Beispielklasse `Statistik` dürft ihr löschen, sobald es eigenen Code und eigene
+  Tests gibt.
 
-# Editing this README
+Mit Sanitizern: `cmake -B build-san -DENABLE_SANITIZERS=ON && cmake --build build-san && ctest --test-dir build-san`
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## 4. Pre-Commit-Hook
 
-## Suggestions for a good README
+`./dev.sh` richtet Git so ein, dass vor jedem Commit `.githooks/pre-commit` läuft: Das
+Projekt wird gebaut und getestet. Schlägt etwas fehl, wird nicht committet. Das gilt auch,
+wenn ihr außerhalb des Containers committet; der Hook startet dann selbst den Container.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Git braucht einmalig euren Namen, im Container:
 
-## Name
-Choose a self-explaining name for your project.
+```
+git config --global user.name "Vorname Nachname"
+git config --global user.email "s0123456@htw-berlin.de"
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Pushen am besten außerhalb des Containers: Dort liegen eure SSH-Schlüssel bzw.
+Zugangsdaten für GitLab, der Container sieht sie nicht.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## 5. OpenCode und Sprachmodell
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+`opencode` im Projektordner starten. OpenCode liest zu Beginn jeder Sitzung `AGENTS.md`.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Welches Modell ihr nutzt, ist euch überlassen (siehe Moodle). Eine Anleitung zur
+Einrichtung folgt. Zwei Hinweise vorab:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+- **API-Schlüssel** nicht ins Projekt legen. `./dev.sh` übernimmt Umgebungsvariablen aus
+  `~/.config/faup/env` auf eurem Rechner (eine Zeile pro Variable, `NAME=wert`).
+- **Lokales Modell auf eurem Rechner** (z.B. LM Studio): Im Container ist euer Rechner
+  unter `host.docker.internal` erreichbar, z.B. `http://host.docker.internal:1234/v1`.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## 6. Dateien
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+| Datei | Zweck |
+|---|---|
+| `PROJEKT.md` | Projektziel, Eigenschaften, Definitions of Done, Schwierigkeit |
+| `AGENTS.md` | Projektkontext und Regeln für den Agenten; mit dem Projekt aktuell halten |
+| `CMakeLists.txt` | Build und Tests |
+| `src/`, `tests/` | Code und Tests |
+| `dev.sh`, `container/` | Dev-Container |
+| `.githooks/pre-commit` | Bauen und testen vor jedem Commit |
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## Probleme
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- **Podman bricht ab mit `crun: open ... merged: Permission denied`:**
+  `FAUP_RUN_ARGS="--group-add keep-groups" ./dev.sh`
+- Weitere Fragen in den Präsenzübungen.

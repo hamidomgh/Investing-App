@@ -1,0 +1,38 @@
+# Dev-Container für FAUP (WiSe 2026/27)
+# Wird lokal gebaut (./dev.sh build); es gibt keine Registry.
+FROM debian:trixie
+
+ARG OPENCODE_VERSION=1.18.35
+ARG TARGETARCH
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake ninja-build gdb \
+        clang clang-format clang-tidy libclang-rt-19-dev \
+        libgtest-dev libgmock-dev gcovr \
+        git ca-certificates curl less nano ripgrep file \
+    && rm -rf /var/lib/apt/lists/*
+
+# OpenCode: feste Version, damit alle dieselbe haben
+RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
+        amd64) arch=x64 ;; arm64) arch=arm64 ;; \
+        *) echo "Architektur nicht unterstützt" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VERSION}/opencode-linux-${arch}.tar.gz" \
+       | tar -xz -C /usr/local/bin opencode \
+    && opencode --version
+
+# Das Projekt wird nach /work eingebunden, eventuell mit fremder UID
+RUN git config --system safe.directory /work
+
+# Benutzer dev (UID 1000). Podman bildet ihn auf den eigenen Benutzer ab; Docker startet
+# mit der UID des Hosts, deshalb ist das Home für jede UID schreibbar. Es liegt in einem
+# Volume (Einstellungen von OpenCode, Git und Shell bleiben erhalten).
+RUN useradd -m -u 1000 -s /bin/bash dev && chmod 1777 /home/dev
+USER dev
+ENV HOME=/home/dev \
+    FAUP_DEV=1 \
+    PS1='[faup] \w\$ '
+
+WORKDIR /work
+CMD ["bash"]

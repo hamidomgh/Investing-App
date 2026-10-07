@@ -1,5 +1,5 @@
 # Dev-Container für FAUP (WiSe 2026/27)
-# Wird lokal gebaut (./dev.sh build); es gibt keine Registry.
+# Wird lokal mit Podman gebaut (./dev.sh build); es gibt keine Registry.
 FROM debian:trixie
 
 ARG OPENCODE_VERSION=1.18.35
@@ -25,10 +25,9 @@ RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
 # Das Projekt wird nach /work eingebunden, eventuell mit fremder UID
 RUN git config --system safe.directory /work
 
-# Benutzer dev (UID 1000). Podman bildet ihn auf den eigenen Benutzer ab; Docker startet
-# mit der UID des Hosts, deshalb ist das Home für jede UID schreibbar. Es liegt in einem
-# Volume (Einstellungen von OpenCode, Git und Shell bleiben erhalten).
-RUN useradd -m -u 1000 -s /bin/bash dev && chmod 1777 /home/dev
+# Benutzer dev (UID 1000); Podman bildet ihn per keep-id auf den eigenen Benutzer ab.
+# Das Home liegt in einem Volume (Einstellungen von OpenCode, Git und Shell bleiben erhalten).
+RUN useradd -m -u 1000 -s /bin/bash dev
 USER dev
 ENV HOME=/home/dev \
     FAUP_DEV=1 \

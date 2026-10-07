@@ -28,13 +28,16 @@ und `AGENTS.md`. Die Rahmenbedingungen für Projekt und Prüfung stehen im Moodl
 
 ## 2. Dev-Container
 
-Voraussetzung ist **Podman** oder **Docker**:
+Voraussetzung ist **Podman**:
 
-- **Linux:** Podman aus den Paketquellen (empfohlen) oder Docker.
-- **macOS:** Podman Desktop oder Docker Desktop.
-- **Windows:** WSL2 mit einer Linux-Distribution (z.B. Ubuntu), darin Podman oder Docker
-  Desktop mit WSL2-Backend. Das Projekt **innerhalb von WSL** klonen
-  (z.B. `~/meinprojekt`), nicht unter `C:\`, und `./dev.sh` in der WSL-Shell ausführen.
+- **Linux:** aus den Paketquellen, z.B. `sudo apt install podman`.
+- **macOS:** [Podman Desktop](https://podman-desktop.io) installieren und dort eine
+  Podman-Maschine anlegen und starten (oder `brew install podman`, dann
+  `podman machine init` und `podman machine start`).
+- **Windows:** WSL2 mit Ubuntu einrichten (`wsl --install` in einer
+  Administrator-PowerShell), dann in der Ubuntu-Shell `sudo apt install podman`. Das
+  Projekt **innerhalb von WSL** klonen (z.B. `~/meinprojekt`), nicht unter `C:\`, und
+  `./dev.sh` in der Ubuntu-Shell ausführen.
 
 Dann im Projektordner:
 
@@ -101,7 +104,7 @@ Einrichtung folgt. Zwei Hinweise vorab:
 - **API-Schlüssel** nicht ins Projekt legen. `./dev.sh` übernimmt Umgebungsvariablen aus
   `~/.config/faup/env` auf eurem Rechner (eine Zeile pro Variable, `NAME=wert`).
 - **Lokales Modell auf eurem Rechner** (z.B. LM Studio): Im Container ist euer Rechner
-  unter `host.docker.internal` erreichbar, z.B. `http://host.docker.internal:1234/v1`.
+  unter `host.containers.internal` erreichbar, z.B. `http://host.containers.internal:1234/v1`.
 
 ## 6. Dateien
 

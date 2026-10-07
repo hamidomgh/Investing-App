@@ -13,8 +13,9 @@
 # API-Schlüssel kommen als Umgebungsvariablen aus einer Datei außerhalb des Projekts
 # (Standard: ~/.config/faup/env, Format: NAME=wert je Zeile).
 #
+# Voraussetzung: Podman (unter Linux aus den Paketquellen, unter macOS Podman Desktop).
+#
 # Einstellbar über Umgebungsvariablen:
-#   ENGINE          podman oder docker (Standard: podman, falls vorhanden)
 #   FAUP_ENV_FILE   Datei mit API-Schlüsseln
 #   FAUP_RUN_ARGS   zusätzliche Optionen für "run", durch Leerzeichen getrennt; z.B.
 #                   "--group-add keep-groups", falls Podman mit
@@ -29,15 +30,9 @@ name="faup-$(basename "$root" | tr -c 'a-zA-Z0-9_.\n-' '_')"
 
 die() { echo "dev.sh: $*" >&2; exit 1; }
 
-engine=${ENGINE:-}
-if [[ -z "$engine" ]]; then
-    if command -v podman >/dev/null 2>&1; then engine=podman
-    elif command -v docker >/dev/null 2>&1; then engine=docker
-    else die "weder podman noch docker gefunden"
-    fi
-fi
+command -v podman >/dev/null 2>&1 || die "podman nicht gefunden (Installation: siehe README.md)"
 
-build() { "$engine" build -t "$image" "$root/container"; }
+build() { podman build -t "$image" "$root/container"; }
 
 if [[ "${1:-}" == build ]]; then
     build
@@ -53,12 +48,12 @@ tty=()
 [[ -t 0 && -t 1 ]] && tty=(-t)
 
 # Läuft der Container schon, dort eine weitere Shell bzw. den Befehl starten
-if [[ "$("$engine" container inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" == true ]]; then
+if [[ "$(podman container inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" == true ]]; then
     [[ $# -gt 0 ]] || set -- bash
-    exec "$engine" exec -i ${tty[@]+"${tty[@]}"} -w /work "$name" "$@"
+    exec podman exec -i ${tty[@]+"${tty[@]}"} -w /work "$name" "$@"
 fi
 
-if ! "$engine" image inspect "$image" >/dev/null 2>&1; then
+if ! podman image inspect "$image" >/dev/null 2>&1; then
     echo "dev.sh: Image $image fehlt, wird gebaut (einmalig, dauert einige Minuten)" >&2
     build
 fi
@@ -71,25 +66,22 @@ args=(run --rm -i ${tty[@]+"${tty[@]}"} --init
 # Pre-Commit-Hook) laufen in einem eigenen, namenlosen Container.
 [[ $# -gt 0 ]] || args+=(--name "$name" --hostname faup-dev)
 
-if [[ "$engine" == podman ]]; then
-    # Benutzer dev (UID 1000) im Container entspricht dem eigenen Benutzer auf dem Host
-    args+=(--userns=keep-id:uid=1000,gid=1000
-           -v "$root:/work:Z" -v "$home_volume:/home/dev:Z")
-    # host.docker.internal erreicht Dienste auf dem Host, auch wenn sie nur auf
-    # localhost lauschen (z.B. LM Studio). Nur unter Linux ab Podman 5 (pasta); auf
-    # macOS läuft Podman in einer VM, dort erledigt das podman machine.
-    if [[ "$(uname -s)" == Linux && "$(podman version -f '{{.Client.Version}}' 2>/dev/null)" =~ ^[5-9]\. ]]; then
+# Benutzer dev (UID 1000) im Container entspricht dem eigenen Benutzer auf dem Host
+args+=(--userns=keep-id:uid=1000,gid=1000
+       -v "$root:/work:Z" -v "$home_volume:/home/dev:Z")
+
+# Der Host ist im Container als host.containers.internal erreichbar, auch für Dienste,
+# die nur auf localhost lauschen (z.B. LM Studio). Unter Linux je nach Netzwerk-Backend:
+# neueres pasta (Podman 5 und später) oder slirp4netns (z.B. Podman 4.9 unter Ubuntu
+# 24.04). Auf macOS läuft Podman in einer VM, dort erledigt das podman machine.
+if [[ "$(uname -s)" == Linux ]]; then
+    if pasta --help 2>&1 | grep -q -- --map-host-loopback; then
         args+=(--network pasta:--map-host-loopback,169.254.1.2
-               --add-host=host.docker.internal:169.254.1.2)
-    else
-        args+=(--add-host=host.docker.internal:host-gateway)
+               --add-host=host.containers.internal:169.254.1.2)
+    elif command -v slirp4netns >/dev/null 2>&1; then
+        args+=(--network slirp4netns:allow_host_loopback=true
+               --add-host=host.containers.internal:10.0.2.2)
     fi
-else
-    # Docker Desktop (macOS, Windows) kennt host.docker.internal; unter Linux muss der
-    # Dienst auf dem Host dann auf 0.0.0.0 statt localhost lauschen.
-    args+=(--add-host=host.docker.internal:host-gateway)
-    args+=(--user "$(id -u):$(id -g)"
-           -v "$root:/work" -v "$home_volume:/home/dev")
 fi
 
 if [[ -f "$env_file" ]]; then
@@ -102,4 +94,4 @@ fi
 read -r -a extra <<< "${FAUP_RUN_ARGS:-}"
 args+=(${extra[@]+"${extra[@]}"})
 
-exec "$engine" "${args[@]}" "$image" "$@"
+exec podman "${args[@]}" "$image" "$@"

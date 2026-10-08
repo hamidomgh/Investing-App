@@ -69,7 +69,9 @@ Zusätzliche Pakete gehören deshalb ins Image:
    <https://packages.debian.org>, Distribution „trixie“).
 2. Alle Shells im Container verlassen, dann `./dev.sh build`. Der Neubau dauert nur so
    lange wie die Installation der neuen Pakete.
-3. Das geänderte `Containerfile` committen. So ist festgehalten, was euer Projekt braucht.
+3. Das geänderte `Containerfile` committen. Nach dem Code-Freeze wird euer Projekt mit
+   dem Containerfile aus eurem Repository gebaut: Was dort fehlt, fehlt auch bei der
+   Bewertung.
 
 Zum Ausprobieren, ohne das Image zu ändern, könnt ihr in den laufenden Container als root
 gehen, in einem zweiten Terminal **auf eurem Rechner**:
@@ -89,7 +91,9 @@ Im Container:
 cmake -B build && cmake --build build && ctest --test-dir build
 ```
 
-Genau mit diesen Befehlen wird euer Projekt nach dem Code-Freeze gebaut und getestet.
+Genau so wird euer Projekt nach dem Code-Freeze gebaut und getestet: Euer Repository wird
+geklont, das Image aus eurem `container/Containerfile` gebaut und darin laufen diese
+Befehle.
 
 - Programmlogik gehört in die Bibliothek `projekt_lib` (`src/`), damit Programm und Tests
   denselben Code nutzen. `src/main.cpp` ist nur der Einstiegspunkt.

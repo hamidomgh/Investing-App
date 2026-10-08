@@ -58,6 +58,29 @@ sich auch auf eurem Rechner, sodass ihr mit eurem gewohnten Editor arbeiten kön
 Im Container enthalten: GCC 14, Clang 19, CMake, GoogleTest, gdb, gcovr, clang-format,
 clang-tidy, OpenCode.
 
+### Software nachinstallieren
+
+Im Container gibt es kein `sudo`. Außerdem wird er bei jedem `./dev.sh` neu aus dem Image
+gestartet, alles außerhalb von `/work` und `/home/dev` geht beim Verlassen verloren.
+Zusätzliche Pakete gehören deshalb ins Image:
+
+1. In `container/Containerfile` den Block „Eigene Pakete“ einkommentieren und die Pakete
+   eintragen (Debian-Paketnamen, z.B. `libfmt-dev`; suchen auf
+   <https://packages.debian.org>, Distribution „trixie“).
+2. Alle Shells im Container verlassen, dann `./dev.sh build`. Der Neubau dauert nur so
+   lange wie die Installation der neuen Pakete.
+3. Das geänderte `Containerfile` committen. So ist festgehalten, was euer Projekt braucht.
+
+Zum Ausprobieren, ohne das Image zu ändern, könnt ihr in den laufenden Container als root
+gehen, in einem zweiten Terminal **auf eurem Rechner**:
+
+```
+podman exec -u root faup-meinprojekt bash -c 'apt-get update && apt-get install -y <paket>'
+```
+
+`faup-meinprojekt` ist `faup-` plus der Name eures Projektordners (`podman ps` zeigt ihn).
+Das Paket ist nur bis zum Verlassen der Shell vorhanden.
+
 ## 3. Bauen und testen
 
 Im Container:

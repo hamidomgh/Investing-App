@@ -22,6 +22,11 @@ RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
        | tar -xz -C /usr/local/bin opencode \
     && opencode --version
 
+# Eigene Pakete: Zeilen einkommentieren, Pakete eintragen, dann ./dev.sh build
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#         paket1 paket2 \
+#     && rm -rf /var/lib/apt/lists/*
+
 # Das Projekt wird nach /work eingebunden, eventuell mit fremder UID
 RUN git config --system safe.directory /work
 

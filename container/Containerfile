@@ -22,6 +22,23 @@ RUN case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
        | tar -xz -C /usr/local/bin opencode \
     && opencode --version
 
+# Claude Code aus dem signierten apt-Repository von Anthropic (Kanal "stable").
+# Der Schlüssel wird beim Bauen gegen den veröffentlichten Fingerabdruck geprüft;
+# gnupg wird nur dafür gebraucht und danach wieder entfernt.
+ARG CLAUDE_KEY_FPR=31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE
+RUN apt-get update && apt-get install -y --no-install-recommends gnupg \
+    && install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL https://downloads.claude.ai/keys/claude-code.asc \
+       -o /etc/apt/keyrings/claude-code.asc \
+    && gpg --show-keys --with-colons /etc/apt/keyrings/claude-code.asc \
+       | grep -qx "fpr:::::::::${CLAUDE_KEY_FPR}:" \
+    && echo "deb [signed-by=/etc/apt/keyrings/claude-code.asc] https://downloads.claude.ai/claude-code/apt/stable stable main" \
+       > /etc/apt/sources.list.d/claude-code.list \
+    && apt-get update && apt-get install -y --no-install-recommends claude-code \
+    && apt-get purge -y --auto-remove gnupg \
+    && rm -rf /var/lib/apt/lists/* \
+    && claude --version
+
 # Eigene Pakete: Zeilen einkommentieren, Pakete eintragen, dann ./dev.sh build
 # RUN apt-get update && apt-get install -y --no-install-recommends \
 #         paket1 paket2 \

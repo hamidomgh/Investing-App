@@ -5,6 +5,9 @@
 
 ## Projektziel
 
+> **Feedback:** Das ist ein anspruchsvolles Projekt! Sehr schön! Es hat viele interessante Aspekte. 
+> Insbesondere das notwendige Multi-threading bei den Anfragen erfordert ein sauberes Design!
+
 MarketLens ist eine Web-Anwendung mit C++17-Backend. Sie ruft historische Kursdaten von Wertpapieren und Indizes aus beliebig vielen Ländern sowie Zinsentscheidungen mehrerer Zentralbanken (z. B. Fed, EZB, Bank of England, Bank of Japan) über Web-APIs ab und berechnet daraus gängige Kennzahlen der technischen Analyse. Die Ergebnisse werden über eine eigene HTTP-JSON-Schnittstelle bereitgestellt und in einer Weboberfläche mit Kursdiagramm, Indikatoren und Support-/Resistance-Linien dargestellt.
 
 "Alle Länder" wird datengetrieben umgesetzt: Jedes Wertpapier ist in einer Konfigurationsdatei mit Symbol, Name, Land und Währung beschrieben, jede Zentralbank mit Land und Währung. Ein neues Land oder Wertpapier wird durch einen neuen Eintrag ergänzt, ohne den Code zu ändern. Kurse werden in der Währung des Wertpapiers verarbeitet; eine Währungsumrechnung ist nicht Teil des Projekts. Welche Anbieter genutzt werden, richtet sich nach deren Bedingungen und kostenlosen Kontingenten; der Zugangsschlüssel (API-Key) wird über eine Umgebungsvariable gelesen und nie im Repository abgelegt.
@@ -16,6 +19,8 @@ Berechnet werden: Trendindikatoren (SMA, EMA, MACD), Momentum (RSI), Volatilitä
 Der Server beantwortet mehrere Anfragen gleichzeitig und hält berechnete Ergebnisse in einem thread-sicheren Cache. Die Analyse-Logik ist von Netzwerk und Darstellung getrennt und ohne Server testbar. Der HTTP-Server und das JSON-Parsing nutzen Header-only-Bibliotheken, die im Repository liegen; die Weboberfläche besteht aus statischem HTML/JavaScript, das vom Server ausgeliefert wird. Gebaut und getestet wird mit CMake und CTest.
 
 ## Eigenschaften und Definitions of Done
+
+> **Feedback:** Das sind gute Eigenschaften. Super!
 
 ### E1: Datenmodell mit Validierung
 **Definition of Done:** Eine Kursreihe besteht aus streng zeitlich aufsteigenden Kerzen (Datum, Open, High, Low, Close, Volumen). Inkonsistente Kerzen (High unter Low, Open oder Close außerhalb von Low..High) und nicht aufsteigende Daten werden abgelehnt, und der Fehler nennt das betroffene Datum. Jedes Wertpapier trägt Symbol, Name, Land und Währung.
@@ -80,6 +85,8 @@ Der Server beantwortet mehrere Anfragen gleichzeitig und hält berechnete Ergebn
 
 R = Summe + größter Einzelwert = 9 + 2 = **11**
 S = min(1, R / 14) = **0,79**
+
+> **Feedback:** Deine Selbsteinschätzung passt!
 
 ## Antrag auf Ausnahme von der OOP-Anforderung
 

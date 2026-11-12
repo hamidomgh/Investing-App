@@ -32,6 +32,7 @@ endif()
 add_library(projekt_lib
     src/statistik.cpp
     src/kursdaten.cpp
+    src/trendindikatoren.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -52,6 +53,7 @@ include(GoogleTest)
 add_executable(tests
     tests/test_statistik.cpp
     tests/test_kursdaten.cpp
+    tests/test_trendindikatoren.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)

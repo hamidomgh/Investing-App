@@ -3,13 +3,25 @@
 
 // std::string für URL und Antworttext
 #include <string>
+// std::move
+#include <utility>
 
 // Antwort eines HTTP-Servers: Statuscode und Inhalt
 struct HttpAntwort {
+    // Leere Antwort (Status 0), z. B. als Platzhalter vor einem Abruf
+    HttpAntwort() = default;
+    // Antwort mit Status und Inhalt, z. B. HttpAntwort{200, "..."}. Die Felder veraltet und hinweis
+    // behalten ihre Standardwerte; nur der Cache (E7) setzt sie.
+    HttpAntwort(int status, std::string body) : status(status), body(std::move(body)) {}
+
     // HTTP-Statuscode, z. B. 200 (OK), 401 (nicht autorisiert), 404 (nicht gefunden), 429 (zu viele Anfragen)
-    int status;
+    int status = 0;
     // Inhalt der Antwort (bei den Anbietern meist JSON)
     std::string body;
+    // true, wenn die Antwort aus dem Cache (E7) stammt und abgelaufen ist, weil kein neuer Abruf möglich war
+    bool veraltet = false;
+    // Hinweis für den Benutzer, z. B. "Stale data from 2026-11-12 14:03 UTC (network error: ...)"; sonst leer
+    std::string hinweis;
 };
 
 // Schnittstelle (Interface) für HTTP-Zugriffe. Alle Datenquellen greifen nur hierüber auf das Netz zu.

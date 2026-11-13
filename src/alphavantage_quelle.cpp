@@ -237,3 +237,30 @@ Kursreihe AlphaVantageQuelle::parse(const std::string& text, const std::string& 
     // Kursreihe erzeugen; sie prüft noch einmal die strenge Reihenfolge (E1)
     return Kursreihe(kerzen);
 }
+
+// Bewertet eine Antwort für den Cache
+Antwortbewertung AlphaVantageQuelle::bewerte(const HttpAntwort& antwort) {
+    // HTTP 429: Kontingent erschöpft
+    if (antwort.status == 429) {
+        // Nicht speichern, alte Daten verwenden
+        return Antwortbewertung::KontingentErschoepft;
+    }
+    // Andere Fehlerstatus: nicht speichern
+    if (antwort.status < 200 || antwort.status > 299) {
+        // Unbrauchbar
+        return Antwortbewertung::Unbrauchbar;
+    }
+    // Status 200: am Inhalt prüfen, ob es echte Kursdaten sind
+    try {
+        // Probeweise parsen; das Symbol dient nur der Fehlermeldung, die hier niemand sieht
+        parse(antwort.body, "cache check");
+        // Ließ sich parsen: speichern
+        return Antwortbewertung::Verwertbar;
+    } catch (const KontingentFehler&) {
+        // "Note" oder "Information" zum Kontingent
+        return Antwortbewertung::KontingentErschoepft;
+    } catch (const QuellenFehler&) {
+        // "Error Message", kaputtes JSON, fehlende Felder ...
+        return Antwortbewertung::Unbrauchbar;
+    }
+}

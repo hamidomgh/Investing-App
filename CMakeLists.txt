@@ -42,6 +42,7 @@ add_library(projekt_lib
     src/alphavantage_quelle.cpp
     src/katalog.cpp
     src/kursabruf.cpp
+    src/http_cache.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -72,6 +73,7 @@ add_executable(tests
     tests/test_quellen.cpp
     tests/test_alphavantage.cpp
     tests/test_katalog.cpp
+    tests/test_http_cache.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)

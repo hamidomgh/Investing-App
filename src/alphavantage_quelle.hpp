@@ -1,6 +1,8 @@
 // Verhindert, dass der Compiler diese Datei mehrfach einliest
 #pragma once
 
+// Antwortbewertung für den Cache (E7)
+#include "http_cache.hpp"
 // Schnittstelle für den HTTP-Zugriff
 #include "http_client.hpp"
 // Schnittstelle, die diese Klasse implementiert
@@ -38,6 +40,13 @@ public:
     // "static", weil dafür kein Client und kein Key nötig sind; so ist das Parsen einzeln testbar.
     // "symbol" wird nur für die Fehlermeldungen verwendet.
     static Kursreihe parse(const std::string& json, const std::string& symbol);
+
+    // Bewertet eine Antwort für den Cache (E7). Nötig, weil Alpha Vantage ein erschöpftes Kontingent
+    // mit HTTP 200 meldet: Nur am Inhalt erkennt man, ob die Antwort gespeichert werden darf.
+    //   429 oder Kontingent-Hinweis im JSON -> KontingentErschoepft
+    //   Daten lassen sich zu einer Kursreihe parsen -> Verwertbar
+    //   sonst (404, "Error Message", kaputtes JSON ...) -> Unbrauchbar
+    static Antwortbewertung bewerte(const HttpAntwort& antwort);
 
 private:
     // Der HTTP-Client, über den alle Anfragen laufen (gehört dem Aufrufer, nicht dieser Klasse)

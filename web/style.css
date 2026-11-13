@@ -1,0 +1,204 @@
+/* Gestaltung der Weboberfläche von MarketLens (E10).
+   Farben als Variablen, damit es ein helles und ein dunkles Schema gibt (je nach Systemeinstellung). */
+
+/* Helles Farbschema (Standard) */
+:root {
+  /* Hintergrund der Seite und der Karten */
+  --grund: #f6f5f1;
+  --karte: #ffffff;
+  /* Schrift: normal und gedämpft */
+  --text: #1d2126;
+  --leise: #5f6670;
+  /* Linien und Raster */
+  --linie: #dedbd3;
+  --raster: #ecebe6;
+  /* Kerzen: steigend und fallend */
+  --steigt: #1f7a4d;
+  --faellt: #b23a2f;
+  /* Linien der Indikatoren */
+  --sma: #2f5d8a;
+  --ema: #a05a00;
+  --bollinger: #7a5ea8;
+  --support: #1f7a4d;
+  --resistance: #b23a2f;
+  --pivot: #6b6f76;
+  --ereignis: #b07d00;
+  --signal: #a05a00;
+  /* Fehler und Hinweise */
+  --fehler-grund: #f8e7e5;
+  --hinweis-grund: #fbf1dc;
+  /* Formularelemente in hellem Stil */
+  color-scheme: light;
+}
+
+/* Dunkles Farbschema, wenn das System es wünscht */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --grund: #15171b;
+    --karte: #1e2126;
+    --text: #e6e6e3;
+    --leise: #9da3ab;
+    --linie: #343840;
+    --raster: #272a30;
+    --steigt: #5cc28c;
+    --faellt: #ef8a80;
+    --sma: #8fb6dd;
+    --ema: #f0b45e;
+    --bollinger: #b9a2e0;
+    --support: #5cc28c;
+    --resistance: #ef8a80;
+    --pivot: #a3a8b0;
+    --ereignis: #e8c15a;
+    --signal: #f0b45e;
+    --fehler-grund: #3a2422;
+    --hinweis-grund: #3a2f17;
+    /* Formularelemente und Bildlaufleisten dunkel */
+    color-scheme: dark;
+  }
+}
+
+/* Breite und Höhe enthalten Rand und Innenabstand (einfacheres Rechnen) */
+* { box-sizing: border-box; }
+
+/* Grundschrift und Farben der Seite */
+body {
+  margin: 0;
+  background: var(--grund);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Kopfzeile: Name links, Formular rechts; bricht auf schmalen Bildschirmen um */
+.kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 12px 20px;
+  background: var(--karte);
+  border-bottom: 1px solid var(--linie);
+}
+/* Name der Anwendung */
+.kopf h1 { margin: 0; font-size: 1.3rem; }
+
+/* Formular in einer Zeile, bricht bei Bedarf um */
+.auswahl { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 14px; }
+/* Beschriftung über dem Feld */
+.auswahl label { display: flex; flex-direction: column; font-size: .8rem; color: var(--leise); }
+
+/* Einheitliche Formularfelder */
+select, input, button {
+  font: inherit;
+  color: var(--text);
+  background: var(--karte);
+  border: 1px solid var(--linie);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+/* Knopf hervorgehoben */
+button { background: var(--sma); color: #fff; border-color: var(--sma); cursor: pointer; }
+
+/* Hauptbereich als Raster: Einstellungen links, Diagramme rechts, darunter Kennzahlen und Ereignisse */
+.inhalt {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  padding: 16px 20px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+/* Fehler, Hinweis, Kennzahlen und Ereignisse über die ganze Breite */
+.fehlerbereich, .hinweis, .kennzahlen, .ereignisse { grid-column: 1 / -1; }
+
+/* Auf schmalen Bildschirmen alles untereinander */
+@media (max-width: 760px) {
+  .inhalt { grid-template-columns: 1fr; }
+}
+
+/* Gemeinsamer Kartenstil */
+.einstellungen, .diagramme, .kennzahlen, .ereignisse {
+  background: var(--karte);
+  border: 1px solid var(--linie);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+/* Überschriften in Karten */
+h2 { font-size: 1rem; margin: 0 0 8px; }
+
+/* Zeile in den Einstellungen: Kästchen, Name, Feld rechts */
+.zeile { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+/* Zahlen- und Textfelder rechtsbündig in der Zeile */
+.zeile .zahl, .zeile .text { margin-left: auto; width: 76px; padding: 2px 6px; }
+/* Kleine, gedämpfte Schrift */
+.klein { font-size: .8rem; color: var(--leise); margin: 6px 0 0; }
+
+/* Titel über dem Diagramm */
+.titel { font-size: 1.05rem; }
+/* Rahmen eines Diagramms; Grundlage für den Infokasten */
+.diagramm { position: relative; width: 100%; }
+/* SVG füllt die Breite */
+.diagramm svg { display: block; width: 100%; }
+/* Höhen der Diagramme */
+.haupt svg { height: 380px; }
+.klein-diagramm svg { height: 130px; }
+/* Abstand zwischen den Diagrammen */
+.klein-diagramm { margin-top: 8px; }
+
+/* Infokasten beim Überfahren */
+.info {
+  position: absolute;
+  top: 8px;
+  left: 60px;
+  pointer-events: none;
+  background: var(--karte);
+  border: 1px solid var(--linie);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fehlermeldungen */
+.fehlerbereich {
+  background: var(--fehler-grund);
+  border-left: 4px solid var(--faellt);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+/* Eine Meldung */
+.fehlerbereich p { margin: 2px 0; }
+/* Hinweis auf veraltete Daten */
+.hinweis {
+  background: var(--hinweis-grund);
+  border-left: 4px solid var(--ereignis);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+/* Kennzahlen als Raster aus Name/Wert-Paaren */
+#kennzahlen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 16px;
+  margin: 0;
+}
+/* Name */
+#kennzahlen dt { font-size: .78rem; color: var(--leise); }
+/* Wert */
+#kennzahlen dd { margin: 0 0 4px; font-variant-numeric: tabular-nums; }
+
+/* Tabelle scrollt seitlich, statt die Seite zu verbreitern */
+.tabellenrahmen { overflow-x: auto; }
+/* Tabelle */
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-variant-numeric: tabular-nums; }
+/* Zellen */
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--linie); }
+/* Spaltenköpfe */
+th { font-size: .78rem; color: var(--leise); font-weight: 600; }
+/* Positive und negative Veränderung */
+.plus { color: var(--steigt); }
+.minus { color: var(--faellt); }
+
+/* Elemente im SVG: Raster, Achsenbeschriftung */
+.raster { stroke: var(--raster); stroke-width: 1; }
+.achse { fill: var(--leise); font-size: 11px; }

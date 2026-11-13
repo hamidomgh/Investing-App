@@ -23,8 +23,10 @@
 #include <condition_variable>
 // std::filesystem für den Ordner mit index.html
 #include <filesystem>
-// std::ofstream
+// std::ifstream und std::ofstream
 #include <fstream>
+// std::stringstream
+#include <sstream>
 // std::async und std::future
 #include <future>
 // std::mutex
@@ -363,4 +365,73 @@ TEST(HttpServer, StatischeDateienUndJsonFuerAnderePfade) {
     }
     // Aufräumen
     std::filesystem::remove_all(ordner);
+}
+
+// ================================================================ Weboberfläche (E10)
+
+// Der echte Ordner web/ wird ausgeliefert: Seite, Skript und Gestaltung mit passendem Inhaltstyp
+TEST(Weboberflaeche, WirdVomServerAusgeliefert) {
+    // Behandler wie in main.cpp (nur für die API daneben)
+    TestQuelle quelle;
+    Anfragebehandlung api({Wertpapier("IBM", "IBM", "USA", "USD")}, quelle, {});
+    // Server mit dem echten Ordner web/ (WEB_DIR setzt CMake)
+    LaufenderServer server(api, 2, WEB_DIR);
+    // Client
+    httplib::Client c = server.client();
+    // Startseite
+    const auto seite = c.Get("/");
+    ASSERT_TRUE(seite);
+    EXPECT_EQ(seite->status, 200);
+    EXPECT_NE(seite->get_header_value("Content-Type").find("text/html"), std::string::npos);
+    // Die Seite bindet Skript und Gestaltung lokal ein
+    EXPECT_NE(seite->body.find("src=\"app.js\""), std::string::npos);
+    EXPECT_NE(seite->body.find("href=\"style.css\""), std::string::npos);
+    // Skript und Gestaltung mit richtigem Inhaltstyp (sonst führt der Browser sie nicht aus)
+    const auto skript = c.Get("/app.js");
+    ASSERT_TRUE(skript);
+    EXPECT_EQ(skript->status, 200);
+    EXPECT_NE(skript->get_header_value("Content-Type").find("javascript"), std::string::npos);
+    const auto stil = c.Get("/style.css");
+    ASSERT_TRUE(stil);
+    EXPECT_EQ(stil->status, 200);
+    EXPECT_NE(stil->get_header_value("Content-Type").find("text/css"), std::string::npos);
+    // Die API funktioniert daneben unter demselben Server
+    const auto liste = c.Get("/api/wertpapiere");
+    ASSERT_TRUE(liste);
+    EXPECT_EQ(liste->status, 200);
+    // Sauber beenden
+    EXPECT_TRUE(server.stoppeUndWarte());
+}
+
+// "Funktioniert ohne externe Dienste" (DoD E10): keine Datei in web/ lädt etwas von einer fremden Adresse.
+// Gesucht wird nach http:// und https://. Erlaubt ist nur die Kennung des SVG-Namensraums, die nichts lädt.
+TEST(Weboberflaeche, KeineExternenAdressen) {
+    // Erlaubte Ausnahme
+    const std::string svgNamensraum = "http://www.w3.org/2000/svg";
+    // Anzahl geprüfter Dateien
+    int dateien = 0;
+    // Alle Dateien im Ordner web/
+    for (const auto& eintrag : std::filesystem::directory_iterator(WEB_DIR)) {
+        // Nur normale Dateien
+        if (!eintrag.is_regular_file()) continue;
+        // Inhalt lesen
+        std::ifstream datei(eintrag.path(), std::ios::binary);
+        std::stringstream puffer;
+        puffer << datei.rdbuf();
+        std::string inhalt = puffer.str();
+        // Erlaubte Ausnahme entfernen
+        for (std::size_t pos = inhalt.find(svgNamensraum); pos != std::string::npos; pos = inhalt.find(svgNamensraum)) {
+            // Stelle löschen
+            inhalt.erase(pos, svgNamensraum.size());
+        }
+        // Keine weiteren Adressen
+        EXPECT_EQ(inhalt.find("http://"), std::string::npos) << eintrag.path();
+        EXPECT_EQ(inhalt.find("https://"), std::string::npos) << eintrag.path();
+        // Auch keine protokoll-relativen Adressen wie src="//cdn..."
+        EXPECT_EQ(inhalt.find("\"//"), std::string::npos) << eintrag.path();
+        // Gezählt
+        ++dateien;
+    }
+    // index.html, app.js, style.css
+    EXPECT_GE(dateien, 3);
 }

@@ -1,0 +1,107 @@
+<!doctype html>
+<!-- Weboberfläche von MarketLens (E10). Wird vom eigenen Server unter "/" ausgeliefert.
+     Alle Dateien (HTML, CSS, JavaScript) liegen im Repository; es werden keine externen Dienste geladen. -->
+<html lang="de">
+<head>
+  <!-- Zeichensatz UTF-8, damit Umlaute richtig angezeigt werden -->
+  <meta charset="utf-8">
+  <!-- Auf Smartphones in Gerätebreite anzeigen statt verkleinert -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Titel im Browser-Tab -->
+  <title>MarketLens</title>
+  <!-- Eigene Gestaltung (liegt im selben Ordner) -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Kopfzeile mit Name und Auswahl -->
+  <header class="kopf">
+    <!-- Name der Anwendung -->
+    <h1>MarketLens</h1>
+    <!-- Formular für Wertpapier und Zeitraum; "submit" wird in app.js abgefangen (kein Neuladen der Seite) -->
+    <form id="auswahl" class="auswahl">
+      <!-- Auswahl des Wertpapiers; die Einträge kommen von /api/wertpapiere -->
+      <label>Wertpapier
+        <select id="symbol" required></select>
+      </label>
+      <!-- Optionaler Zeitraum -->
+      <label>von <input id="von" type="date"></label>
+      <label>bis <input id="bis" type="date"></label>
+      <!-- Startet das Laden -->
+      <button type="submit">Anzeigen</button>
+    </form>
+  </header>
+
+  <!-- Hauptbereich -->
+  <main class="inhalt">
+    <!-- Fehlermeldungen der Schnittstelle (leer und versteckt, solange es keine gibt) -->
+    <div id="fehler" class="fehlerbereich" hidden></div>
+    <!-- Hinweis auf veraltete Daten aus dem Cache (E7) -->
+    <div id="hinweis" class="hinweis" hidden></div>
+
+    <!-- Seitenleiste mit den Einstellungen der Indikatoren -->
+    <aside class="einstellungen">
+      <!-- Überschrift -->
+      <h2>Indikatoren</h2>
+      <!-- Jede Zeile: Ein/Aus und Periode. Die Standardwerte entsprechen denen der Schnittstelle (E8). -->
+      <label class="zeile"><input id="zeigeSma" type="checkbox" checked> SMA
+        <input id="sma" class="zahl" type="number" min="1" value="20" title="Periode"></label>
+      <label class="zeile"><input id="zeigeEma" type="checkbox" checked> EMA
+        <input id="ema" class="zahl" type="number" min="1" value="20" title="Periode"></label>
+      <label class="zeile"><input id="zeigeBollinger" type="checkbox"> Bollinger
+        <input id="bollinger" class="text" type="text" value="20,2" title="Periode,k"></label>
+      <label class="zeile"><input id="zeigeNiveaus" type="checkbox" checked> Support/Resistance</label>
+      <label class="zeile"><input id="zeigePivot" type="checkbox"> Pivot-Punkte</label>
+      <label class="zeile"><input id="zeigeEreignisse" type="checkbox" checked> Zinsentscheidungen</label>
+      <label class="zeile"><input id="zeigeRsi" type="checkbox" checked> RSI
+        <input id="rsi" class="zahl" type="number" min="1" value="14" title="Periode"></label>
+      <label class="zeile"><input id="zeigeMacd" type="checkbox" checked> MACD
+        <input id="macd" class="text" type="text" value="12,26,9" title="schnell,langsam,signal"></label>
+      <!-- Hinweis, wann die Einstellungen wirken -->
+      <p class="klein">Perioden wirken nach „Anzeigen“, Ein/Aus sofort.</p>
+    </aside>
+
+    <!-- Diagramme -->
+    <section class="diagramme">
+      <!-- Name des Wertpapiers und letzter Kurs -->
+      <h2 id="titel" class="titel">Bitte ein Wertpapier wählen</h2>
+      <!-- Kursdiagramm; das SVG zeichnet app.js -->
+      <div class="diagramm haupt"><svg id="kurschart" role="img" aria-label="Kursdiagramm"></svg>
+        <!-- Infokasten beim Überfahren mit der Maus -->
+        <div id="info" class="info" hidden></div></div>
+      <!-- RSI-Diagramm -->
+      <div id="rsiBox" class="diagramm klein-diagramm"><svg id="rsichart" role="img" aria-label="RSI"></svg></div>
+      <!-- MACD-Diagramm -->
+      <div id="macdBox" class="diagramm klein-diagramm"><svg id="macdchart" role="img" aria-label="MACD"></svg></div>
+    </section>
+
+    <!-- Kennzahlen (Volatilität, Drawdown, Pivot-Punkte) -->
+    <section class="kennzahlen">
+      <!-- Überschrift -->
+      <h2>Kennzahlen</h2>
+      <!-- Wird von app.js gefüllt -->
+      <dl id="kennzahlen"></dl>
+    </section>
+
+    <!-- Ereignisstudie (E6) -->
+    <section class="ereignisse">
+      <!-- Überschrift -->
+      <h2>Ereignisstudie: Zinsentscheidungen</h2>
+      <!-- Erklärung des Datums (E6: Tag der Wirksamkeit, nicht der Sitzung) -->
+      <p id="ereignisHinweis" class="klein"></p>
+      <!-- Tabelle; in einem Rahmen, der auf schmalen Bildschirmen seitlich scrollt -->
+      <div class="tabellenrahmen">
+        <table>
+          <!-- Spaltenköpfe -->
+          <thead><tr><th>Zentralbank</th><th>Wirksam ab</th><th>Leitzins</th><th>Reaktionstag</th>
+            <th>Kurs vorher</th><th>Kurs nachher</th><th>Veränderung</th></tr></thead>
+          <!-- Zeilen füllt app.js -->
+          <tbody id="ereignisTabelle"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Programmlogik der Seite; am Ende, damit alle Elemente oben schon existieren -->
+  <script src="app.js"></script>
+</body>
+</html>

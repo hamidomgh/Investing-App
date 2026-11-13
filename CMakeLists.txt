@@ -39,9 +39,13 @@ add_library(projekt_lib
     src/ereignisstudie.cpp
     src/http_client.cpp
     src/umgebung.cpp
+    src/alphavantage_quelle.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
+# Header-only-Bibliotheken aus third_party/ (z. B. nlohmann/json). SYSTEM unterdrückt deren Warnungen,
+# PRIVATE: nur die .cpp-Dateien der Bibliothek brauchen sie, die eigenen Header nicht.
+target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
 
 # Erstellt das Hauptprogramm aus der main.cpp
 add_executable(projekt src/main.cpp)
@@ -64,8 +68,11 @@ add_executable(tests
     tests/test_supportresistance.cpp
     tests/test_ereignisstudie.cpp
     tests/test_quellen.cpp
+    tests/test_alphavantage.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)
+# Pfad zu den Testdaten (aufgezeichnete und handgeschriebene Antworten), als Konstante FIXTURES_DIR im Code
+target_compile_definitions(tests PRIVATE FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures")
 # Erkennt automatisch alle TEST() Makros als CTest-Tests
 gtest_discover_tests(tests)             # jeder TEST() wird ein CTest-Test

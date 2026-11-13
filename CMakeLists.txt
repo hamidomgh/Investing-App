@@ -35,6 +35,8 @@ add_library(projekt_lib
     src/trendindikatoren.cpp
     src/risikokennzahlen.cpp
     src/supportresistance.cpp
+    src/zinsentscheidung.cpp
+    src/ereignisstudie.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -58,6 +60,7 @@ add_executable(tests
     tests/test_trendindikatoren.cpp
     tests/test_risikokennzahlen.cpp
     tests/test_supportresistance.cpp
+    tests/test_ereignisstudie.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)

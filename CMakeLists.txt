@@ -55,17 +55,21 @@ target_include_directories(projekt_lib PUBLIC src)
 # PRIVATE: nur die .cpp-Dateien der Bibliothek brauchen sie, die eigenen Header nicht.
 target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
 
-# Erstellt das Hauptprogramm (Server) aus main.cpp und der Netzwerkschicht.
-# http_server.cpp liegt bewusst nicht in projekt_lib: Es ist reine Übersetzung zwischen cpp-httplib und
-# Anfragebehandlung; die Logik ist in projekt_lib und dort ohne Socket getestet.
-add_executable(projekt src/main.cpp src/http_server.cpp)
-# Verlinkt das Hauptprogramm mit der Bibliothek
-target_link_libraries(projekt PRIVATE projekt_lib)
+# Netzwerkschicht als eigene kleine Bibliothek (E8/E9): reine Übersetzung zwischen cpp-httplib und
+# IAnfrageBehandler. Getrennt von projekt_lib, damit nur diese Datei die große httplib.h übersetzt.
+# Die Tests binden sie ein, um den Server über echte lokale Sockets zu prüfen (Parallelität, Beenden).
+add_library(projekt_server src/http_server.cpp)
+target_link_libraries(projekt_server PUBLIC projekt_lib)
 # cpp-httplib (third_party/httplib.h); SYSTEM unterdrückt Warnungen aus fremdem Code
-target_include_directories(projekt SYSTEM PRIVATE third_party)
-# cpp-httplib braucht Threads (pthread)
+target_include_directories(projekt_server SYSTEM PRIVATE third_party)
+# Threads (pthread) für cpp-httplib und unseren ThreadPool
 find_package(Threads REQUIRED)
-target_link_libraries(projekt PRIVATE Threads::Threads)
+target_link_libraries(projekt_server PUBLIC Threads::Threads)
+
+# Erstellt das Hauptprogramm (Server) aus main.cpp
+add_executable(projekt src/main.cpp)
+# Verlinkt das Hauptprogramm mit der Netzwerkschicht (und darüber mit projekt_lib)
+target_link_libraries(projekt PRIVATE projekt_server)
 
 # Tests
 enable_testing()
@@ -89,9 +93,10 @@ add_executable(tests
     tests/test_anfragebehandlung.cpp
     tests/test_dateiquelle.cpp
     tests/test_nebenlaeufigkeit.cpp
+    tests/test_http_server.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
-target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)
+target_link_libraries(tests PRIVATE projekt_lib projekt_server GTest::gtest_main)
 # Die Tests lesen JSON-Antworten der Schnittstelle (E8) mit nlohmann/json
 target_include_directories(tests SYSTEM PRIVATE third_party)
 # Pfad zu den Testdaten (aufgezeichnete und handgeschriebene Antworten), als Konstante FIXTURES_DIR im Code

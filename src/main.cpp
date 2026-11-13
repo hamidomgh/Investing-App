@@ -8,13 +8,26 @@
 #include "katalog.hpp"
 // Fehlerklassen (für Fehler beim Lesen des Katalogs)
 #include "quellenfehler.hpp"
+// E9: Ergebnis-Cache, gecachte Anfragebehandlung, thread-sichere Quelle, echte Uhr
+#include "ergebnis_cache.hpp"
+#include "gecachte_anfragebehandlung.hpp"
+#include "synchronisierte_quelle.hpp"
+#include "uhr.hpp"
+
+// pthread_sigmask, sigwait, pthread_kill: Signale (Strg+C) in einem eigenen Thread empfangen (POSIX)
+#include <csignal>
+#include <pthread.h>
 
 // std::from_chars für die Portnummer
 #include <charconv>
+// std::chrono::minutes für die Gültigkeit des Ergebnis-Caches
+#include <chrono>
 // std::cout und std::cerr
 #include <iostream>
 // std::string
 #include <string>
+// std::thread
+#include <thread>
 // std::vector
 #include <vector>
 
@@ -34,6 +47,8 @@ struct Einstellungen {
     std::string daten = "daten";
     // Ordner der Weboberfläche (E10)
     std::string web = "web";
+    // Anzahl der Arbeits-Threads (E9); 0 = so viele, wie der Rechner Kerne meldet
+    int threads = 0;
 };
 
 // Gibt die Hilfe aus
@@ -45,6 +60,7 @@ void hilfe() {
                  "  --katalog DATEI  Katalog der Wertpapiere (Standard config/katalog.json)\n"
                  "  --daten ORDNER   gespeicherte Kursdaten <SYMBOL>.json (Standard daten)\n"
                  "  --web ORDNER     Dateien der Weboberfläche (Standard web)\n"
+                 "  --threads N      Arbeits-Threads (Standard: Anzahl der Prozessorkerne)\n"
                  "  --hilfe          diese Hilfe\n";
 }
 
@@ -87,6 +103,16 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
                 rueckgabe = 2;
                 return false;
             }
+        } else if (a == "--threads") {
+            // Anzahl Threads als Zahl lesen
+            const auto r = std::from_chars(wert.data(), wert.data() + wert.size(), e.threads);
+            // Nur ganze Zahlen von 1 bis 256
+            if (r.ec != std::errc() || r.ptr != wert.data() + wert.size() || e.threads < 1 || e.threads > 256) {
+                // Ungültige Anzahl
+                std::cerr << "Fehler: ungültige Anzahl Threads: " << wert << "\n";
+                rueckgabe = 2;
+                return false;
+            }
         } else if (a == "--katalog") {
             // Katalogdatei
             e.katalog = wert;
@@ -112,7 +138,7 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
 
 // Startet den MarketLens-Server
 //   ./build/projekt
-//   ./build/projekt --host 0.0.0.0 --port 8080
+//   ./build/projekt --host 0.0.0.0 --port 8080 --threads 8
 int main(int argc, char* argv[]) {
     // Einstellungen mit Standardwerten
     Einstellungen e;
@@ -135,24 +161,69 @@ int main(int argc, char* argv[]) {
                       << f.meldung << "\n";
         }
 
+        // Kette der Anfragebearbeitung (E9):
+        //   Server -> Ergebnis-Cache -> Anfragebehandlung -> SynchronisierteQuelle -> DateiQuelle
         // Offline-Kursquelle (der Live-Zugriff über HTTPS kommt später mit einer CMake-Option)
-        DateiQuelle quelle(e.daten);
+        DateiQuelle dateiQuelle(e.daten);
+        // Nur ein Thread gleichzeitig lädt Daten; Berechnungen laufen parallel
+        SynchronisierteQuelle quelle(dateiQuelle);
         // Logik der Schnittstelle; Zinsentscheidungen gibt es erst mit der Zinsquelle (E6), bis dahin keine
         Anfragebehandlung api(katalog.wertpapiere(), quelle, {});
-        // Netzwerkschicht
-        HttpServer server(api, e.web);
+        // Ergebnisse 5 Minuten aufbewahren, höchstens 1000 verschiedene Anfragen
+        SystemUhr uhr;
+        ErgebnisCache cache(uhr, std::chrono::minutes{5}, 1000);
+        GecachteAnfragebehandlung gecacht(api, cache);
 
-        // Hinweis, wo der Server zu erreichen ist
-        std::cout << "MarketLens: " << katalog.wertpapiere().size() << " Wertpapiere, Kursdaten aus '" << e.daten
-                  << "/'\n"
-                  << "Server läuft auf http://" << e.host << ":" << e.port << "  (beenden mit Strg+C)\n"
-                  << std::flush;
-        // Starten; kehrt erst beim Beenden zurück
-        if (!server.starte(e.host, e.port)) {
+        // Anzahl Threads: Vorgabe oder Anzahl der Kerne (hardware_concurrency kann 0 liefern, dann 4)
+        const unsigned kerne = std::thread::hardware_concurrency();
+        const std::size_t threads = e.threads > 0 ? static_cast<std::size_t>(e.threads) : (kerne > 0 ? kerne : 4);
+
+        // Signale SIGINT (Strg+C) und SIGTERM für ALLE Threads sperren, BEVOR Threads gestartet werden.
+        // Neue Threads erben die Sperre. Dann kommen die Signale nur noch beim Signal-Thread unten an,
+        // der sie mit sigwait() gezielt abholt. So läuft das Beenden als normaler Code in einem normalen
+        // Thread, nicht in einem Signal-Handler (dort dürften fast keine Funktionen aufgerufen werden).
+        sigset_t signale;
+        sigemptyset(&signale);
+        sigaddset(&signale, SIGINT);
+        sigaddset(&signale, SIGTERM);
+        pthread_sigmask(SIG_BLOCK, &signale, nullptr);
+
+        // Netzwerkschicht mit Thread-Pool
+        HttpServer server(gecacht, e.web, threads);
+        // Port öffnen
+        if (server.binde(e.host, e.port) < 0) {
             // Port belegt oder Adresse ungültig
             std::cerr << "Fehler: Server konnte nicht auf " << e.host << ":" << e.port << " starten\n";
             return 1;
         }
+
+        // Signal-Thread: wartet auf Strg+C oder SIGTERM und stoppt dann den Server
+        std::thread signalThread([&server, &signale] {
+            // Nummer des empfangenen Signals
+            int signal = 0;
+            // Blockiert, bis eines der Signale kommt
+            sigwait(&signale, &signal);
+            // Sicherstellen, dass lausche() wirklich läuft (oder nicht mehr starten wird), dann stoppen
+            server.warteBisBereit();
+            server.stoppe();
+        });
+
+        // Hinweis, wo der Server zu erreichen ist
+        std::cout << "MarketLens: " << katalog.wertpapiere().size() << " Wertpapiere, Kursdaten aus '" << e.daten
+                  << "/', " << threads << " Threads\n"
+                  << "Server läuft auf http://" << e.host << ":" << e.port << "  (beenden mit Strg+C)\n"
+                  << std::flush;
+        // Anfragen bearbeiten; kehrt nach stoppe() zurück, wenn alle Anfragen fertig und alle Threads beendet sind
+        server.lausche();
+
+        // Falls lausche() ohne Signal endete: Server als gestoppt markieren und den Signal-Thread wecken,
+        // damit auch er endet (er wartet sonst ewig auf ein Signal)
+        server.stoppe();
+        pthread_kill(signalThread.native_handle(), SIGTERM);
+        // Auf den Signal-Thread warten: danach läuft kein Thread des Programms mehr außer main
+        signalThread.join();
+        // Meldung
+        std::cout << "MarketLens beendet.\n";
     } catch (const QuellenFehler& f) {
         // Katalog fehlt oder ist kein gültiges JSON
         std::cerr << "Fehler: " << f.what() << "\n";

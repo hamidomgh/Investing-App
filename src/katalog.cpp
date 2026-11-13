@@ -15,6 +15,10 @@
 #include <sstream>
 // std::invalid_argument aus dem Wertpapier-Konstruktor (E1)
 #include <stdexcept>
+// std::move
+#include <utility>
+// std::vector
+#include <vector>
 
 // Anonymer Namespace: Hilfsfunktionen nur in dieser Datei sichtbar
 namespace {
@@ -45,6 +49,31 @@ std::string leseText(const json& eintrag, const char* feld) {
     }
     // Text zurückgeben
     return it->get<std::string>();
+}
+
+// Liest eine Liste von Texten (z. B. "laender"); wirft EintragFehler, wenn sie fehlt oder etwas anderes enthält
+std::vector<std::string> leseTextliste(const json& eintrag, const char* feld) {
+    // Feld suchen
+    const auto it = eintrag.find(feld);
+    // Muss eine Liste sein
+    if (it == eintrag.end() || !it->is_array()) {
+        // Fehler nennt den Feldnamen
+        throw EintragFehler{std::string("field '") + feld + "' must be a list of strings"};
+    }
+    // Ergebnis
+    std::vector<std::string> liste;
+    // Jedes Element
+    for (const json& element : *it) {
+        // Muss Text sein
+        if (!element.is_string()) {
+            // Fehler
+            throw EintragFehler{std::string("field '") + feld + "' must be a list of strings"};
+        }
+        // Anhängen
+        liste.push_back(element.get<std::string>());
+    }
+    // Fertige Liste
+    return liste;
 }
 
 }  // namespace
@@ -108,6 +137,53 @@ Katalog Katalog::ausJson(const std::string& text) {
             katalog.fehler_.push_back({i, symbol, e.what()});
         }
     }
+    // Zentralbanken (E6): optional, damit Kataloge ohne diesen Abschnitt weiter funktionieren
+    if (dokument.contains("zentralbanken")) {
+        // Muss eine Liste sein, sonst ist der ganze Abschnitt unbrauchbar
+        if (!dokument["zentralbanken"].is_array()) {
+            // Ganzer Katalog ungültig, wie bei "wertpapiere"
+            throw ParseFehler("Catalog field 'zentralbanken' must be an array");
+        }
+        // Bereits gesehene Namen
+        std::set<std::string> namen;
+        // Die Liste
+        const json& banken = dokument["zentralbanken"];
+        // Jeden Eintrag einzeln prüfen; ein Fehler betrifft nur diesen Eintrag
+        for (std::size_t i = 0; i < banken.size(); ++i) {
+            // Aktueller Eintrag
+            const json& eintrag = banken[i];
+            // Name für die Fehlermeldung
+            std::string name;
+            // Fehler dieses Eintrags abfangen
+            try {
+                // Muss ein Objekt sein
+                if (!eintrag.is_object()) {
+                    // Fehler
+                    throw EintragFehler{"entry must be an object"};
+                }
+                // Felder lesen
+                name = leseText(eintrag, "name");
+                std::vector<std::string> laender = leseTextliste(eintrag, "laender");
+                const std::string waehrung = leseText(eintrag, "waehrung");
+                const std::string serie = leseText(eintrag, "fredSerie");
+                // Zentralbank erzeugen; der Konstruktor prüft leere Felder und Länder
+                Zentralbank bank(name, std::move(laender), waehrung, serie);
+                // Doppelter Name?
+                if (!namen.insert(name).second) {
+                    // Der erste Eintrag gilt
+                    throw EintragFehler{"duplicate central bank"};
+                }
+                // Übernehmen
+                katalog.zentralbanken_.push_back(bank);
+            } catch (const EintragFehler& f) {
+                // Fehler merken, weitermachen
+                katalog.zentralbankFehler_.push_back({i, name, f.meldung});
+            } catch (const std::invalid_argument& e) {
+                // Fehler aus dem Konstruktor merken, weitermachen
+                katalog.zentralbankFehler_.push_back({i, name, e.what()});
+            }
+        }
+    }
     // Fertigen Katalog zurückgeben
     return katalog;
 }
@@ -138,6 +214,18 @@ const std::vector<Wertpapier>& Katalog::wertpapiere() const {
 const std::vector<KatalogFehler>& Katalog::fehler() const {
     // Referenz auf die interne Liste
     return fehler_;
+}
+
+// Liefert die gültigen Zentralbanken
+const std::vector<Zentralbank>& Katalog::zentralbanken() const {
+    // Referenz auf die interne Liste
+    return zentralbanken_;
+}
+
+// Liefert die fehlerhaften Zentralbanken
+const std::vector<KatalogFehler>& Katalog::zentralbankFehler() const {
+    // Referenz auf die interne Liste
+    return zentralbankFehler_;
 }
 
 // Sucht ein Wertpapier nach Symbol (lineare Suche; Kataloge sind klein)

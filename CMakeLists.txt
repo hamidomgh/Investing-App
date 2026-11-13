@@ -48,6 +48,10 @@ add_library(projekt_lib
     src/threadpool.cpp
     src/ergebnis_cache.cpp
     src/gecachte_anfragebehandlung.cpp
+    src/zentralbank.cpp
+    src/fred_quelle.cpp
+    src/datei_zinsquelle.cpp
+    src/zinsabruf.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -94,6 +98,7 @@ add_executable(tests
     tests/test_dateiquelle.cpp
     tests/test_nebenlaeufigkeit.cpp
     tests/test_http_server.cpp
+    tests/test_fred.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib projekt_server GTest::gtest_main)

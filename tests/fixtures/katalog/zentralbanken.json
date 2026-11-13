@@ -1,0 +1,12 @@
+{
+    "wertpapiere": [],
+    "zentralbanken": [
+        { "name": "Fed", "laender": ["USA"], "waehrung": "USD", "fredSerie": "DFEDTARU" },
+        { "name": "OhneLaender", "waehrung": "XXX", "fredSerie": "X1" },
+        { "name": "LeereListe", "laender": [], "waehrung": "XXX", "fredSerie": "X2" },
+        { "name": "ZahlImLand", "laender": ["A", 7], "waehrung": "XXX", "fredSerie": "X3" },
+        { "name": "OhneSerie", "laender": ["A"], "waehrung": "XXX", "fredSerie": "" },
+        { "name": "Fed", "laender": ["Kanada"], "waehrung": "CAD", "fredSerie": "X4" },
+        { "name": "EZB", "laender": ["Deutschland", "Frankreich"], "waehrung": "EUR", "fredSerie": "ECBDFR" }
+    ]
+}

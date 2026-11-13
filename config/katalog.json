@@ -6,5 +6,13 @@
         { "symbol": "TSCO.LON",     "name": "Tesco PLC",                       "land": "Großbritannien", "waehrung": "GBP" },
         { "symbol": "SHOP.TRT",     "name": "Shopify Inc.",                    "land": "Kanada",         "waehrung": "CAD" },
         { "symbol": "RELIANCE.BSE", "name": "Reliance Industries Ltd.",        "land": "Indien",         "waehrung": "INR" }
+    ],
+    "zentralbanken": [
+        { "name": "Fed", "laender": ["USA"], "waehrung": "USD", "fredSerie": "DFEDTARU" },
+        { "name": "EZB",
+          "laender": ["Belgien", "Bulgarien", "Deutschland", "Estland", "Finnland", "Frankreich", "Griechenland",
+                      "Irland", "Italien", "Kroatien", "Lettland", "Litauen", "Luxemburg", "Malta", "Niederlande",
+                      "Österreich", "Portugal", "Slowakei", "Slowenien", "Spanien", "Zypern"],
+          "waehrung": "EUR", "fredSerie": "ECBDFR" }
     ]
 }

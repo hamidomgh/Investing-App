@@ -3,6 +3,8 @@
 
 // Wertpapier (E1)
 #include "kursdaten.hpp"
+// Zentralbank (E6)
+#include "zentralbank.hpp"
 
 // std::size_t für die Position im Katalog
 #include <cstddef>
@@ -28,6 +30,12 @@ struct KatalogFehler {
 //       ...
 //   ] }
 //
+// Optional (E6) zusätzlich die Zentralbanken mit den Ländern, für die sie zuständig sind:
+//
+//   "zentralbanken": [
+//       { "name": "EZB", "laender": ["Deutschland", "Frankreich", ...], "waehrung": "EUR", "fredSerie": "ECBDFR" }
+//   ]
+//
 // "symbol" ist das Symbol, das der Kursdaten-Anbieter erwartet (bei Alpha Vantage z. B. "MBG.DEX").
 // Ein neues Wertpapier oder Land wird durch einen neuen Eintrag ergänzt, ohne den Code zu ändern.
 // Ein fehlerhafter Eintrag wird übersprungen und in fehler() gemeldet; die übrigen bleiben erhalten.
@@ -47,6 +55,12 @@ public:
     // Alle fehlerhaften Einträge (leer, wenn alles in Ordnung ist)
     const std::vector<KatalogFehler>& fehler() const;
 
+    // Alle gültigen Zentralbanken (E6); leer, wenn der Katalog keine "zentralbanken" enthält
+    const std::vector<Zentralbank>& zentralbanken() const;
+
+    // Fehlerhafte Einträge in "zentralbanken"; "position" zählt in dieser Liste, "symbol" ist der Name der Bank
+    const std::vector<KatalogFehler>& zentralbankFehler() const;
+
     // Sucht ein Wertpapier nach Symbol. Liefert nullptr, wenn es das Symbol nicht gibt.
     // Der Zeiger bleibt gültig, solange der Katalog existiert und nicht verändert wird.
     const Wertpapier* finde(const std::string& symbol) const;
@@ -57,6 +71,10 @@ private:
 
     // Die gültigen Wertpapiere
     std::vector<Wertpapier> wertpapiere_;
+    // Die gültigen Zentralbanken
+    std::vector<Zentralbank> zentralbanken_;
+    // Die übersprungenen Zentralbanken mit Begründung
+    std::vector<KatalogFehler> zentralbankFehler_;
     // Die übersprungenen Einträge mit Begründung
     std::vector<KatalogFehler> fehler_;
 };

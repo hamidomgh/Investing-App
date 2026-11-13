@@ -2,6 +2,9 @@
 #include "anfragebehandlung.hpp"
 // Offline-Kursquelle: liest gespeicherte Antworten aus einem Ordner
 #include "dateiquelle.hpp"
+// Offline-Zinsquelle und Laden aller Zentralbanken (E6)
+#include "datei_zinsquelle.hpp"
+#include "zinsabruf.hpp"
 // Netzwerkschicht des Servers
 #include "http_server.hpp"
 // Katalog der Wertpapiere (E2)
@@ -45,6 +48,8 @@ struct Einstellungen {
     std::string katalog = "config/katalog.json";
     // Ordner mit gespeicherten Alpha-Vantage-Antworten (<SYMBOL>.json)
     std::string daten = "daten";
+    // Ordner mit gespeicherten FRED-Antworten (<SERIE>.json) für die Zinsentscheidungen (E6)
+    std::string zinsen = "daten/zinsen";
     // Ordner der Weboberfläche (E10)
     std::string web = "web";
     // Anzahl der Arbeits-Threads (E9); 0 = so viele, wie der Rechner Kerne meldet
@@ -59,6 +64,7 @@ void hilfe() {
                  "  --port PORT      Port (Standard 8080)\n"
                  "  --katalog DATEI  Katalog der Wertpapiere (Standard config/katalog.json)\n"
                  "  --daten ORDNER   gespeicherte Kursdaten <SYMBOL>.json (Standard daten)\n"
+                 "  --zinsen ORDNER  gespeicherte FRED-Zinsdaten <SERIE>.json (Standard daten/zinsen)\n"
                  "  --web ORDNER     Dateien der Weboberfläche (Standard web)\n"
                  "  --threads N      Arbeits-Threads (Standard: Anzahl der Prozessorkerne)\n"
                  "  --hilfe          diese Hilfe\n";
@@ -116,6 +122,9 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
         } else if (a == "--katalog") {
             // Katalogdatei
             e.katalog = wert;
+        } else if (a == "--zinsen") {
+            // Ordner der Zinsdaten
+            e.zinsen = wert;
         } else if (a == "--daten") {
             // Datenordner
             e.daten = wert;
@@ -160,6 +169,22 @@ int main(int argc, char* argv[]) {
             std::cerr << "Warnung: Katalog-Eintrag " << f.position << " (" << f.symbol << ") übersprungen: "
                       << f.meldung << "\n";
         }
+        // Ebenso fehlerhafte Zentralbanken
+        for (const KatalogFehler& f : katalog.zentralbankFehler()) {
+            // Position, Name und Grund
+            std::cerr << "Warnung: Zentralbank " << f.position << " (" << f.symbol << ") übersprungen: " << f.meldung
+                      << "\n";
+        }
+
+        // Zinsentscheidungen aller Zentralbanken einmal beim Start laden (E6).
+        // Offline aus gespeicherten FRED-Antworten; fehlt eine Datei, fehlen nur die Ereignisse dieser Bank.
+        DateiZinsquelle zinsquelle(e.zinsen);
+        const ZinsLadeergebnis zinsen = ladeAlleEntscheidungen(zinsquelle, katalog.zentralbanken());
+        // Fehler einzelner Zentralbanken melden
+        for (const ZinsLadefehler& f : zinsen.fehler) {
+            // Name und Grund
+            std::cerr << "Warnung: Zinsdaten von " << f.zentralbank << " nicht geladen: " << f.meldung << "\n";
+        }
 
         // Kette der Anfragebearbeitung (E9):
         //   Server -> Ergebnis-Cache -> Anfragebehandlung -> SynchronisierteQuelle -> DateiQuelle
@@ -167,8 +192,8 @@ int main(int argc, char* argv[]) {
         DateiQuelle dateiQuelle(e.daten);
         // Nur ein Thread gleichzeitig lädt Daten; Berechnungen laufen parallel
         SynchronisierteQuelle quelle(dateiQuelle);
-        // Logik der Schnittstelle; Zinsentscheidungen gibt es erst mit der Zinsquelle (E6), bis dahin keine
-        Anfragebehandlung api(katalog.wertpapiere(), quelle, {});
+        // Logik der Schnittstelle mit Katalog, Kursquelle und Zinsentscheidungen
+        Anfragebehandlung api(katalog.wertpapiere(), quelle, zinsen.entscheidungen);
         // Ergebnisse 5 Minuten aufbewahren, höchstens 1000 verschiedene Anfragen
         SystemUhr uhr;
         ErgebnisCache cache(uhr, std::chrono::minutes{5}, 1000);
@@ -210,7 +235,8 @@ int main(int argc, char* argv[]) {
 
         // Hinweis, wo der Server zu erreichen ist
         std::cout << "MarketLens: " << katalog.wertpapiere().size() << " Wertpapiere, Kursdaten aus '" << e.daten
-                  << "/', " << threads << " Threads\n"
+                  << "/', " << katalog.zentralbanken().size() << " Zentralbanken (" << zinsen.entscheidungen.size()
+                  << " Zinseinträge), " << threads << " Threads\n"
                   << "Server läuft auf http://" << e.host << ":" << e.port << "  (beenden mit Strg+C)\n"
                   << std::flush;
         // Anfragen bearbeiten; kehrt nach stoppe() zurück, wenn alle Anfragen fertig und alle Threads beendet sind

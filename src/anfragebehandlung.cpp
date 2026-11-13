@@ -516,6 +516,9 @@ Antwort Anfragebehandlung::ereignisstudie(const Anfrage& anfrage) {
     // Kopf plus Ereignisse (leere Liste, wenn keine passende Zentralbank: kein Fehler)
     json inhalt = kopf(wp, daten);
     inhalt["ereignisse"] = ereignisse;
+    // Art des Datums (E6): Die Zinsdaten von FRED nennen den Tag, an dem der neue Zins WIRKSAM wird, nicht den
+    // Tag der Sitzung. Das wird offen ausgewiesen, damit die Oberfläche es anzeigen kann.
+    inhalt["datumsart"] = "wirksam";
     // Antwort
     return okAntwort(inhalt);
 }

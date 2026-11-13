@@ -9,10 +9,9 @@ Zu jeder Funktionalität gehört ein Test; bestehende Tests werden nicht abgesch
 - Vorhanden: `src/kursdaten.{hpp,cpp}` (`Kerze`, `Kursreihe`, `Wertpapier`, noch nicht committet),
   `src/statistik.*`, `tests/test_kursdaten.cpp`, `tests/test_statistik.cpp`.
 - E1 ist angefangen; es fehlt noch die Prüfung der Details (Fehlermeldung mit Datum, Wertpapier-Validierung).
-- Offener Punkt: `PROJEKT.md` nennt "C++17-Backend", `AGENTS.md`/`CMakeLists.txt` verwenden C++20.
-  Vorschlag: bei C++20 bleiben und `PROJEKT.md` anpassen (bitte bestätigen).
-- Header-only-Bibliotheken (HTTP-Server z. B. cpp-httplib, JSON z. B. nlohmann/json) müssen ins Repository
-  (`third_party/`). Das sind neue externe Abhängigkeiten → **vorher Rückfrage** (siehe AGENTS.md).
+- Entschieden: C++20. **Abweichung:** `PROJEKT.md` nennt "C++17-Backend"; `AGENTS.md`, `CMakeLists.txt`
+  und der Code verwenden C++20. `PROJEKT.md` bleibt unverändert.
+- Freigegeben: nlohmann/json und cpp-httplib als Header in `third_party/` (siehe "Entscheidungen" unten).
 
 ## Reihenfolge und Abhängigkeiten
 
@@ -48,7 +47,7 @@ Struktur: eigene Klassen/Funktionen je Gruppe, Rückgabe als `std::vector<std::o
 ### Phase 3 – Netzwerk-Abstraktion und Datenquellen (E2, E6, E7)
 8. Interfaces `IHttpClient` (Antwort: Status, Body; Fehler: Netzwerk/Timeout), `IPriceSource`, `IRateSource`;
    `FakeHttpClient` für Tests (liefert aufgezeichnete Antworten aus `tests/fixtures/`).
-9. JSON-Einbindung (nach Rückfrage) und Fehlerhierarchie: `NetzwerkFehler`, `HttpStatusFehler` (401/404/429),
+9. JSON-Einbindung (nlohmann/json) und Fehlerhierarchie: `NetzwerkFehler`, `HttpStatusFehler` (401/404/429),
    `ParseFehler`, `KonfigurationsFehler` – jeweils mit verständlicher Meldung.
 10. **E2** `PriceSource`-Implementierung: API-Key aus Umgebungsvariable (fehlt → Fehler vor der ersten Anfrage),
     JSON → validierte `Kerze`n. Katalog `katalog.json` (Symbol, Name, Land, Währung); fehlerhafte Einträge werden
@@ -66,7 +65,7 @@ Struktur: eigene Klassen/Funktionen je Gruppe, Rückgabe als `std::vector<std::o
 15. **E8** `Anfragebehandlung` getrennt vom Socket: Funktion `Antwort behandle(const Anfrage&)` mit Endpunkten
     `/api/wertpapiere`, `/api/kurse`, `/api/indikatoren`, `/api/ereignisstudie`; Parameterprüfung →
     400/404 mit JSON-Fehler. Tests ohne Socket.
-16. Dünne Netzwerkschicht (HTTP-Server-Bibliothek, nach Rückfrage) ruft nur `behandle` auf; statische Dateien
+16. Dünne Netzwerkschicht (cpp-httplib) ruft nur `behandle` auf; statische Dateien
     aus `web/` ausliefern.
 17. **E9** Thread-Pool + thread-sicherer Ergebnis-Cache (`std::shared_mutex`; identische Anfragen nur einmal
     berechnen, z. B. über `std::shared_future` pro Schlüssel). Tests: parallele Ergebnisse == sequentielle,
@@ -89,7 +88,7 @@ src/   kursdaten, trendindikatoren, risiko, supportresistance, http_client, quel
        cache, uhr, ereignisstudie, anfragebehandlung, threadpool, server, main
 tests/ ein test_*.cpp je Modul, tests/fixtures/ für aufgezeichnete Antworten
 web/   index.html, app.js, style.css
-third_party/  Header-only-Bibliotheken (nach Rückfrage)
+third_party/  Header-only-Bibliotheken (nlohmann/json, cpp-httplib)
 docs/  testprotokoll.md
 ```
 
@@ -102,8 +101,18 @@ docs/  testprotokoll.md
 | Race Conditions | Sanitizer-Lauf, Stresstest mit festem Seed |
 | Referenzwerte falsch von Hand gerechnet | Rechnung im Testkommentar, im Zweifel zweite unabhängige Rechnung |
 
-## Offene Fragen an dich
+## Entscheidungen (2026-11-13, Optionen und Begründung in `docs/E2_Optionen.html`)
 
-1. C++17 (PROJEKT.md) oder C++20 (AGENTS.md/CMake)?
-2. Freigabe für Header-only-Bibliotheken (vorgeschlagen: nlohmann/json, cpp-httplib)?
-3. Welche Kursdaten-API (z. B. Alpha Vantage, Twelve Data) und Zinsdaten-Quelle?
+`PROJEKT.md` wird nicht geändert. Wo eine Entscheidung vom Text abweicht, steht das hier.
+
+| Thema | Entscheidung |
+|---|---|
+| C++-Standard | C++20 (Abweichung von "C++17-Backend" in `PROJEKT.md`) |
+| JSON | nlohmann/json (ein Header in `third_party/`) |
+| HTTPS-Client (nur CMake-Option) | cpp-httplib + OpenSSL (dieselbe Bibliothek wie der Server in E8) |
+| Kursdaten | Alpha Vantage (globale Symbole mit Börsen-Suffix), mit Cache aus E7 |
+| Zinsdaten | FRED (ein API-Key für mehrere Zentralbanken) |
+| Fehlerbehandlung | Exception-Hierarchie (`QuellenFehler` und Unterklassen) |
+| Katalog | JSON-Datei |
+| Zentralbank-Zuordnung | weiterhin **nach Land**, wie in E6 gefordert. Jede Zentralbank bekommt im Katalog eine Liste ihrer Länder (z. B. EZB: Deutschland, Frankreich, Italien, …), damit der Euroraum funktioniert. Die Zuordnung nach Währung entfällt, weil sie vom Text in `PROJEKT.md` abweichen würde |
+| Testdaten | aufgezeichnete echte Antworten und kleine handgeschriebene JSON-Dateien |

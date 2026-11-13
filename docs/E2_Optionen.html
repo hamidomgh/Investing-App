@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E2 Options</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --card: #ffffff; --text: #1f2328; --muted: #5d6470; --line: #e1ded6;
+    --accent: #2f5d8a; --pro: #1f7a4d; --pro-bg: #e8f4ec; --con: #a3382f; --con-bg: #f8e9e7;
+    --rec: #8a5a00; --rec-bg: #fbf1dc; --code: #efede7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #16181c; --card: #1f2227; --text: #e6e6e3; --muted: #a1a6ae; --line: #33373e;
+      --accent: #8fb6dd; --pro: #7fcf9f; --pro-bg: #1d3027; --con: #ef9a90; --con-bg: #3a2422;
+      --rec: #f0c36a; --rec-bg: #3a2f17; --code: #2a2d33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 1.9rem; margin: 0 0 6px; }
+  h2 { font-size: 1.3rem; margin: 48px 0 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h2 .num { color: var(--accent); margin-right: 6px; }
+  h3 { font-size: 1.02rem; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .why { color: var(--muted); margin-bottom: 16px; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  nav { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+  nav ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav a { color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  .table-scroll { overflow-x: auto; margin: 16px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; background: var(--card);
+          border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .opt { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .opt.recommended { border: 2px solid var(--rec); }
+  .tag { display: inline-block; font-size: .74rem; font-weight: 600; padding: 1px 8px; border-radius: 999px;
+         background: var(--rec-bg); color: var(--rec); margin-left: 6px; vertical-align: 2px; }
+  .tag.out { background: var(--con-bg); color: var(--con); }
+  .meta { color: var(--muted); font-size: .88rem; margin-bottom: 10px; }
+  ul.pc { list-style: none; padding: 0; margin: 0 0 8px; }
+  ul.pc li { padding: 4px 8px 4px 26px; border-radius: 6px; margin-bottom: 4px; position: relative; font-size: .93rem; }
+  ul.pc li::before { position: absolute; left: 8px; font-weight: 700; }
+  ul.pro li { background: var(--pro-bg); }
+  ul.pro li::before { content: "+"; color: var(--pro); }
+  ul.con li { background: var(--con-bg); }
+  ul.con li::before { content: "−"; color: var(--con); }
+  .rec { background: var(--rec-bg); border-left: 4px solid var(--rec); padding: 12px 14px; border-radius: 6px; margin-top: 14px; }
+  .rec strong { color: var(--rec); }
+  .note { font-size: .88rem; color: var(--muted); margin-top: 10px; }
+  footer { margin-top: 48px; font-size: .85rem; color: var(--muted); }
+  footer a { color: var(--accent); }
+  @media (max-width: 640px) { nav ol { columns: 1; } h1 { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>E2 – Price data over a web API: all options</h1>
+<p class="sub">MarketLens · decision overview for E2 (and the loading part of E6) · as of 13 Nov 2026</p>
+
+<p>E2 is blocked on a few decisions that are yours to make. This page lists every option I see, with pros and cons,
+and marks my recommendation. Requirements that rule options in or out come from <code>PROJEKT.md</code> and <code>AGENTS.md</code>:</p>
+<ul>
+  <li>The default build (<code>cmake -B build &amp;&amp; cmake --build build &amp;&amp; ctest --test-dir build</code>) must work <strong>offline and without extra libraries</strong>.</li>
+  <li>Real HTTPS access is a <strong>CMake option</strong> that is off by default. Tests use a <strong>fake <code>IHttpClient</code></strong> with recorded responses.</li>
+  <li>HTTP server and JSON parsing use <strong>header-only libraries inside the repo</strong>.</li>
+  <li>The <strong>API key comes from an environment variable</strong> and is never stored in the repo. A missing key is reported before the first request.</li>
+  <li>Use providers <strong>according to their terms</strong> and free quotas.</li>
+  <li>No new external dependencies without asking (<code>AGENTS.md</code>).</li>
+</ul>
+
+<nav>
+  <strong>Decisions</strong>
+  <ol>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#std">C++ standard</a></li>
+    <li><a href="#json">JSON library</a></li>
+    <li><a href="#http">HTTPS client (live mode)</a></li>
+    <li><a href="#price">Price data provider</a></li>
+    <li><a href="#rates">Rate data provider (E6)</a></li>
+    <li><a href="#errors">Error handling design</a></li>
+    <li><a href="#catalog">Catalog format</a></li>
+    <li><a href="#match">Matching central banks (E6)</a></li>
+    <li><a href="#fixtures">Test data (fixtures)</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<h2 id="summary"><span class="num">0</span>Summary</h2>
+<div class="table-scroll">
+<table>
+  <tr><th>Decision</th><th>Options</th><th>My recommendation</th></tr>
+  <tr><td>C++ standard</td><td>C++17 · C++20</td><td><strong>C++20</strong>: the code already uses it. Fix the wording in <code>PROJEKT.md</code></td></tr>
+  <tr><td>JSON library</td><td>nlohmann/json · RapidJSON · simdjson · Boost.JSON · Glaze · own parser</td><td><strong>nlohmann/json</strong></td></tr>
+  <tr><td>HTTPS client</td><td>cpp-httplib + OpenSSL · libcurl · Boost.Beast · cpr · <code>curl</code> via <code>popen</code></td><td><strong>cpp-httplib + OpenSSL</strong> (same library as the E8 server)</td></tr>
+  <tr><td>Price provider</td><td>Alpha Vantage · Twelve Data · EODHD · FMP · Tiingo · Finnhub · Stooq · Yahoo (unofficial)</td><td><strong>Alpha Vantage</strong> (global symbols), with the E7 cache</td></tr>
+  <tr><td>Rate provider</td><td>FRED · official central bank APIs · versioned JSON file</td><td><strong>FRED</strong> (one key, several banks), optionally plus the ECB API</td></tr>
+  <tr><td>Error handling</td><td>exception hierarchy · result type · error codes</td><td><strong>Exception hierarchy</strong> (consistent with E1–E6)</td></tr>
+  <tr><td>Catalog format</td><td>JSON · CSV · TOML/INI · hard-coded</td><td><strong>JSON</strong> (same library)</td></tr>
+  <tr><td>Central bank match</td><td>by country · by currency · country list per bank</td><td><strong>By currency</strong> (needs a small <code>PROJEKT.md</code> change)</td></tr>
+  <tr><td>Fixtures</td><td>recorded real responses · hand-written JSON · both</td><td><strong>Both</strong></td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="std"><span class="num">1</span>C++ standard</h2>
+<p class="why"><code>PROJEKT.md</code> says "C++17 backend", while <code>AGENTS.md</code> and <code>CMakeLists.txt</code> say C++20. The existing code (E5 tests, E6) already uses C++20 features: <code>std::chrono::sys_days</code>, <code>year/month/day</code>, <code>floor&lt;days&gt;</code>.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>C++20 <span class="tag">recommended</span></h3>
+    <ul class="pc pro">
+      <li>Matches <code>AGENTS.md</code>, <code>CMakeLists.txt</code> and all existing code: no rework</li>
+      <li>Calendar dates in <code>&lt;chrono&gt;</code> (needed for E2 date parsing and E6)</li>
+      <li>All recommended libraries support it</li>
+    </ul>
+    <ul class="pc con">
+      <li><code>PROJEKT.md</code> has to be corrected (one word)</li>
+      <li>No <code>std::expected</code> (that is C++23)</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>C++17</h3>
+    <ul class="pc pro">
+      <li>Matches the current text of <code>PROJEKT.md</code></li>
+      <li>Works with older compilers</li>
+    </ul>
+    <ul class="pc con">
+      <li>Contradicts <code>AGENTS.md</code> and <code>CMakeLists.txt</code></li>
+      <li>E5 tests, E6 and the test helpers must be rewritten (no <code>sys_days</code>, no calendar types)</li>
+      <li>Date handling with <code>std::tm</code>/<code>mktime</code> depends on the time zone (we already saw this in E1)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="json"><span class="num">2</span>JSON library</h2>
+<p class="why">E2 parses the provider response and the catalog. The library must be header-only and live in the repo (e.g. <code>third_party/</code>). E2 has to tell apart "invalid JSON" and "missing field".</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>nlohmann/json <span class="tag">recommended</span></h3>
+    <div class="meta">MIT · one header <code>json.hpp</code> · C++11 and later</div>
+    <ul class="pc pro">
+      <li>Most widely used. Its API reads like normal C++ (<code>j["close"].get&lt;double&gt;()</code>), which makes it easy to explain in the exam</li>
+      <li>Its typed exceptions map directly onto the E2 error cases: <code>parse_error</code> → invalid JSON, <code>out_of_range</code> → missing field, <code>type_error</code> → wrong type</li>
+      <li>One file, very good documentation</li>
+      <li>Can also write JSON, which E8 needs for the server responses</li>
+    </ul>
+    <ul class="pc con">
+      <li>Large header (~25k lines), so compiling is slower</li>
+      <li>Slower and more memory-hungry than RapidJSON/simdjson. That doesn't matter for a few KB of daily prices</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>RapidJSON</h3>
+    <div class="meta">MIT · header-only · C++03 and later</div>
+    <ul class="pc pro">
+      <li>Very fast, small memory footprint</li>
+      <li>Header-only, mature</li>
+    </ul>
+    <ul class="pc con">
+      <li>Verbose API (<code>HasMember</code>, <code>IsDouble</code>, <code>GetDouble</code> for every field)</li>
+      <li>Error codes instead of exceptions: you have to translate them yourself</li>
+      <li>Development has been slow for years</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>simdjson</h3>
+    <div class="meta">Apache-2.0 / MIT · amalgamated <code>simdjson.h</code> + <code>simdjson.cpp</code></div>
+    <ul class="pc pro">
+      <li>Fastest JSON parser available</li>
+      <li>Good error reporting</li>
+    </ul>
+    <ul class="pc con">
+      <li>Not header-only: needs a <code>.cpp</code> file. That doesn't match the <code>PROJEKT.md</code> wording</li>
+      <li>Read-only: it can't write JSON, so E8 would need a second library</li>
+      <li>The on-demand API has pitfalls (values can only be read once, in order)</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Boost.JSON <span class="tag out">doesn't fit</span></h3>
+    <div class="meta">BSL-1.0 · part of Boost</div>
+    <ul class="pc pro">
+      <li>Good quality, fast, can read and write</li>
+    </ul>
+    <ul class="pc con">
+      <li>Needs Boost, a large external dependency</li>
+      <li>Header-only only in a special mode. Not "one file in the repo"</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Glaze</h3>
+    <div class="meta">MIT · header-only</div>
+    <ul class="pc pro">
+      <li>Very fast, maps JSON directly onto structs</li>
+    </ul>
+    <ul class="pc con">
+      <li>Newer versions need C++23, older ones may lack fixes</li>
+      <li>Heavy template code: compile errors are hard to read and the code is hard to explain</li>
+      <li>Many files, not a single header</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Own parser</h3>
+    <ul class="pc pro">
+      <li>No dependency at all</li>
+      <li>Good for showing algorithmic skills</li>
+    </ul>
+    <ul class="pc con">
+      <li>A lot of work: escapes, Unicode, numbers, nesting, error positions</li>
+      <li>High risk of bugs, and every bug needs its own test</li>
+      <li>Takes time away from the actual features (E7–E10)</li>
+      <li>The project description already says a library is used</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="http"><span class="num">3</span>HTTPS client for live mode</h2>
+<p class="why">Only active when the CMake option (e.g. <code>-DMARKETLENS_LIVE_HTTP=ON</code>) is set. The default build doesn't compile it. It implements <code>IHttpClient</code>, and the rest of the code doesn't know which library is behind it. All providers require <strong>HTTPS</strong>, so TLS support is mandatory.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>cpp-httplib + OpenSSL <span class="tag">recommended</span></h3>
+    <div class="meta">MIT · one header <code>httplib.h</code> · HTTPS via <code>CPPHTTPLIB_OPENSSL_SUPPORT</code></div>
+    <ul class="pc pro">
+      <li>Same library as the E8 HTTP server: <strong>one</strong> dependency for client and server</li>
+      <li>Simple API: <code>cli.Get(path)</code> returns status and body. Timeouts can be set</li>
+      <li>Header-only, lives in the repo</li>
+    </ul>
+    <ul class="pc con">
+      <li>HTTPS needs OpenSSL (<code>libssl-dev</code>) in the container. That's only for the live option, but it's a change to the <code>Containerfile</code></li>
+      <li>Fewer features than curl (proxies, HTTP/2)</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>libcurl</h3>
+    <div class="meta">curl licence (MIT-like) · system library · <code>find_package(CURL)</code></div>
+    <ul class="pc pro">
+      <li>The industry standard: very robust, every TLS and proxy case solved</li>
+      <li>Precise error codes (timeout, DNS, TLS) that map well onto E2 error cases</li>
+      <li>CMake has built-in support</li>
+    </ul>
+    <ul class="pc con">
+      <li>C API: needs an RAII wrapper class (callback for the body, <code>curl_easy_cleanup</code>)</li>
+      <li>A second network library next to the server library</li>
+      <li>Needs <code>libcurl-dev</code> in the container (live option only)</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Boost.Beast / Asio</h3>
+    <ul class="pc pro">
+      <li>Very powerful, asynchronous</li>
+    </ul>
+    <ul class="pc con">
+      <li>Needs Boost plus OpenSSL</li>
+      <li>A lot of code for a simple GET. Hard to explain</li>
+      <li>Far more than this project needs</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>cpr</h3>
+    <div class="meta">C++ wrapper around libcurl</div>
+    <ul class="pc pro">
+      <li>Pleasant C++ API (<code>cpr::Get(cpr::Url{...})</code>)</li>
+    </ul>
+    <ul class="pc con">
+      <li>Needs libcurl anyway, plus cpr itself (usually via <code>FetchContent</code>, which downloads during the build)</li>
+      <li>Two dependencies instead of one</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3><code>curl</code> command via <code>popen</code> <span class="tag out">not advisable</span></h3>
+    <ul class="pc pro">
+      <li>No library at all. Only the <code>curl</code> program is needed</li>
+    </ul>
+    <ul class="pc con">
+      <li>Security risk: shell injection if a symbol or the key ends up in the command line, and the key is visible in the process list</li>
+      <li>Poor error handling (exit codes, stderr parsing)</li>
+      <li>Not portable, hard to test, looks like a hack in the exam</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="price"><span class="num">4</span>Price data provider</h2>
+<p class="why">Must deliver daily OHLCV data as JSON for <strong>many countries</strong>, with an <strong>API key</strong> (the DoD requires "missing key is reported"). Only official APIs with acceptable terms qualify. Free quotas change often: <strong>check the numbers below on the provider's pricing page</strong> before you decide.</p>
+<div class="table-scroll">
+<table>
+  <tr><th>Provider</th><th>Free quota (approx.)</th><th>Global coverage on the free tier</th><th>Key</th></tr>
+  <tr><td>Alpha Vantage</td><td>25 requests/day</td><td>Yes, with exchange suffixes (e.g. <code>.LON</code>, <code>.DEX</code>, <code>.TRT</code>, <code>.BSE</code>)</td><td>yes</td></tr>
+  <tr><td>Twelve Data</td><td>800/day, 8/min</td><td>Partly. Many non-US exchanges need a paid plan</td><td>yes</td></tr>
+  <tr><td>Financial Modeling Prep</td><td>250/day</td><td>Mostly US on the free tier</td><td>yes</td></tr>
+  <tr><td>EODHD</td><td>small daily quota (verify)</td><td>Very good (70+ exchanges), but limited history on the free tier</td><td>yes</td></tr>
+  <tr><td>Tiingo</td><td>~1000/day</td><td>Mainly US/China</td><td>yes</td></tr>
+  <tr><td>Finnhub</td><td>60/min</td><td>Historical candles for non-US mostly paid</td><td>yes</td></tr>
+  <tr><td>Stooq</td><td>no official quota</td><td>Good (indices, many countries)</td><td>no, CSV only</td></tr>
+  <tr><td>Yahoo Finance</td><td>unofficial</td><td>Very good</td><td>no, not an official API</td></tr>
+</table>
+</div>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>Alpha Vantage <span class="tag">recommended</span></h3>
+    <ul class="pc pro">
+      <li>Global stocks on the free tier via exchange suffixes. That fits "all countries" well</li>
+      <li>Simple JSON (<code>TIME_SERIES_DAILY</code>), well documented, widely used</li>
+      <li>Clear error signals inside the JSON (<code>"Error Message"</code>, <code>"Note"</code>/<code>"Information"</code> when the quota is exhausted). Good test cases for E2</li>
+    </ul>
+    <ul class="pc con">
+      <li>Only ~25 requests/day: the E7 disk cache is essential, and you must develop against fixtures</li>
+      <li>The quota error comes as <strong>HTTP 200</strong> with a message in the body, not as 429. The code must detect it from the content</li>
+      <li>Index coverage on the free tier is limited</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Twelve Data</h3>
+    <ul class="pc pro">
+      <li>Much larger quota (800/day)</li>
+      <li>Clean JSON with explicit <code>code</code>/<code>status</code> fields, and real 429 behaviour</li>
+    </ul>
+    <ul class="pc con">
+      <li>Many international exchanges aren't in the free plan, which weakens "all countries"</li>
+      <li>Per-minute limit (8/min) needs throttling</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>EODHD</h3>
+    <ul class="pc pro">
+      <li>Best global coverage (stocks, indices, many exchanges)</li>
+      <li>Simple end-of-day JSON</li>
+    </ul>
+    <ul class="pc con">
+      <li>Very small free quota and limited history on the free tier (verify the current terms)</li>
+      <li>Less common, so fewer examples online</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Financial Modeling Prep / Tiingo / Finnhub</h3>
+    <ul class="pc pro">
+      <li>Generous quotas, good JSON</li>
+      <li>Fine for US securities</li>
+    </ul>
+    <ul class="pc con">
+      <li>Free tiers mostly US-only for historical daily data, which doesn't fit "all countries"</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Stooq <span class="tag out">doesn't fit the DoD</span></h3>
+    <ul class="pc pro">
+      <li>No key, many countries and indices</li>
+    </ul>
+    <ul class="pc con">
+      <li>CSV, not JSON. E2 says "JSON response"</li>
+      <li>No key, so "missing API key is reported" can't be implemented or tested</li>
+      <li>No official API documentation or guaranteed terms</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Yahoo Finance (unofficial) <span class="tag out">excluded</span></h3>
+    <ul class="pc pro">
+      <li>Free, very good coverage</li>
+    </ul>
+    <ul class="pc con">
+      <li>No official public API: using it conflicts with "according to the provider's terms"</li>
+      <li>Endpoints change or break without notice</li>
+      <li>No key, so the same DoD problem as Stooq</li>
+    </ul>
+  </div>
+</div>
+<div class="rec"><strong>Design note:</strong> because everything goes through <code>IPriceSource</code>, you can start with one provider and add a second one later (e.g. Twelve Data for US, Alpha Vantage for the rest) without touching the analysis code. The catalog then stores the provider symbol for each security.</div>
+
+<!-- ============================================================ -->
+<h2 id="rates"><span class="num">5</span>Rate data provider (E6 loading part)</h2>
+<p class="why">E6 needs rate decisions (bank, country, date, rate) for several central banks via <code>IRateSource</code>. There is no single free API that lists "decisions". You usually get a <strong>daily rate series</strong> and derive the decisions from the days the rate <strong>changes</strong>.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>FRED (St. Louis Fed) <span class="tag">recommended</span></h3>
+    <div class="meta">free API key · JSON · e.g. <code>DFEDTARU</code>/<code>DFEDTARL</code> (Fed target range), <code>ECBDFR</code> (ECB deposit rate)</div>
+    <ul class="pc pro">
+      <li>One key and one JSON format for several central banks</li>
+      <li>Official, stable, well documented</li>
+      <li>Has a key, so "missing key" works the same way as in E2</li>
+    </ul>
+    <ul class="pc con">
+      <li>Gives the date the rate <strong>takes effect</strong>, which can be a day or more after the decision. The event study would then measure a slightly shifted day. Document this or correct it</li>
+      <li>Coverage for BoE and BoJ as daily policy-rate series needs checking. Some are only monthly</li>
+      <li>Decisions without a rate change ("hold") are invisible in a change-point series</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Official central bank APIs</h3>
+    <div class="meta">e.g. ECB Data Portal (SDMX, JSON, no key), Bank of England database (CSV)</div>
+    <ul class="pc pro">
+      <li>Primary sources, most accurate dates</li>
+      <li>The ECB API needs no key and supports SDMX-JSON</li>
+    </ul>
+    <ul class="pc con">
+      <li>A different format per bank: one <code>IRateSource</code> implementation each</li>
+      <li>SDMX-JSON is deeply nested and awkward to parse</li>
+      <li>The BoE delivers CSV, and the BoJ has no simple API</li>
+      <li>No key, so the "missing key" logic doesn't apply</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Versioned JSON file in the repo</h3>
+    <div class="meta">hand-maintained list of real decision dates</div>
+    <ul class="pc pro">
+      <li>Exact decision dates, including "hold" decisions</li>
+      <li>Works offline, no quota</li>
+    </ul>
+    <ul class="pc con">
+      <li>Not a web API, so on its own it doesn't meet the E6 DoD</li>
+      <li>Must be updated by hand</li>
+      <li>Good as a <strong>fallback</strong> or for tests, not as the only source</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="errors"><span class="num">6</span>Error handling design</h2>
+<p class="why">E2 must distinguish: network error / timeout, HTTP status (401, 404), quota (429), invalid JSON, missing fields, missing API key. A faulty catalog entry must not stop the others.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>Exception hierarchy <span class="tag">recommended</span></h3>
+    <div class="meta">base <code>QuellenFehler</code> → <code>NetzwerkFehler</code>, <code>ZeitueberschreitungFehler</code>, <code>HttpFehler(status)</code>, <code>KontingentFehler</code>, <code>ParseFehler</code>, <code>KonfigurationsFehler</code></div>
+    <ul class="pc pro">
+      <li>Consistent with E1–E6, which all use <code>std::invalid_argument</code></li>
+      <li>Each case can be tested with <code>EXPECT_THROW(..., KontingentFehler)</code></li>
+      <li>E7 can catch exactly <code>NetzwerkFehler</code>/<code>KontingentFehler</code> to fall back to stale cache data</li>
+      <li>Classic OOP (inheritance), easy to explain</li>
+    </ul>
+    <ul class="pc con">
+      <li>Per-entry catalog errors must be caught and collected in a loop (a <code>try</code>/<code>catch</code> per security)</li>
+      <li>Control flow is less visible than with return values</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Result type</h3>
+    <div class="meta">own <code>Ergebnis&lt;T&gt;</code> or <code>std::variant&lt;T, Fehler&gt;</code></div>
+    <ul class="pc pro">
+      <li>Errors are visible in the function signature</li>
+      <li>Natural for "evaluate all securities, collect errors"</li>
+    </ul>
+    <ul class="pc con">
+      <li><code>std::expected</code> is C++23 and not available in C++20, so you'd have to write it yourself</li>
+      <li>Mixes two styles in the project (E1–E6 use exceptions)</li>
+      <li>More code at every call site</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Error codes (enum + message)</h3>
+    <ul class="pc pro">
+      <li>Simple, no exceptions</li>
+    </ul>
+    <ul class="pc con">
+      <li>Easy to forget to check</li>
+      <li>Needs out-parameters or pairs, which isn't modern C++</li>
+      <li>Inconsistent with the rest of the code</li>
+    </ul>
+  </div>
+</div>
+<div class="rec"><strong>Combination:</strong> exceptions inside the sources, plus a small result struct for the catalog evaluation (<code>{ erfolgreiche Wertpapiere, Liste der Fehler pro Symbol }</code>). That meets "a faulty security doesn't prevent the others".</div>
+
+<!-- ============================================================ -->
+<h2 id="catalog"><span class="num">7</span>Catalog format</h2>
+<p class="why">The catalog describes symbol, name, country, currency (and the provider symbol) for any number of securities. A new country is added by a new entry, without changing code.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>JSON file <span class="tag">recommended</span></h3>
+    <div class="meta"><code>katalog.json</code>: <code>[{"symbol":"SAP","name":"SAP SE","land":"Deutschland","waehrung":"EUR","anbieterSymbol":"SAP.DEX"}, …]</code></div>
+    <ul class="pc pro">
+      <li>Same library as for the API responses: no extra parser</li>
+      <li>Can hold optional or extra fields later (provider symbol, central bank)</li>
+      <li>The same error categories apply (invalid JSON, missing field)</li>
+    </ul>
+    <ul class="pc con">
+      <li>Less pleasant to edit by hand than CSV (quotes, commas)</li>
+      <li>No comments allowed in standard JSON</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>CSV file</h3>
+    <ul class="pc pro">
+      <li>Very easy to edit, also in Excel</li>
+      <li>Compact, one line per security</li>
+    </ul>
+    <ul class="pc con">
+      <li>Needs its own parser (quotes, commas inside names like "Apple, Inc.")</li>
+      <li>Flat. Hard to extend with nested data</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>TOML / INI</h3>
+    <ul class="pc pro">
+      <li>Readable, comments allowed</li>
+    </ul>
+    <ul class="pc con">
+      <li>Needs another library (a new dependency)</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Hard-coded in C++ <span class="tag out">violates the DoD</span></h3>
+    <ul class="pc pro">
+      <li>No parsing</li>
+    </ul>
+    <ul class="pc con">
+      <li>A new country would need a code change, which the DoD explicitly forbids</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="match"><span class="num">8</span>Matching central banks to securities (affects E6)</h2>
+<p class="why">Today E6 matches by <strong>country</strong>. The ECB covers about 20 countries, so a German stock (<code>"Deutschland"</code>) never matches an ECB decision (<code>"Eurozone"</code>).</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>By currency <span class="tag">recommended</span></h3>
+    <ul class="pc pro">
+      <li>Solves the euro area: EUR → ECB, USD → Fed, GBP → BoE, JPY → BoJ, CHF → SNB</li>
+      <li>Every security already has a currency, so no new data is needed</li>
+      <li>Economically sensible: a central bank sets the rate for its currency</li>
+    </ul>
+    <ul class="pc con">
+      <li>Changes the E6 wording in <code>PROJEKT.md</code> ("country" → "currency")</li>
+      <li>Small code change in E6 plus tests</li>
+      <li>Edge case: a security listed in a foreign currency (e.g. an ADR in USD) is matched to the Fed</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>By country (current)</h3>
+    <ul class="pc pro">
+      <li>Exactly as <code>PROJEKT.md</code> says, no change needed</li>
+    </ul>
+    <ul class="pc con">
+      <li>Doesn't work for the euro area unless every country gets its own copy of each ECB decision</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>List of countries per central bank</h3>
+    <div class="meta">e.g. ECB: <code>["Deutschland","Frankreich","Italien", …]</code> in the catalog</div>
+    <ul class="pc pro">
+      <li>Stays "by country", as in <code>PROJEKT.md</code></li>
+      <li>Most precise and flexible</li>
+    </ul>
+    <ul class="pc con">
+      <li>More data to maintain (about 20 euro countries)</li>
+      <li>More code and more catalog error cases</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="fixtures"><span class="num">9</span>Test data (fixtures)</h2>
+<p class="why">All tests run offline with a fake <code>IHttpClient</code> that returns stored responses from <code>tests/fixtures/</code>.</p>
+<div class="grid">
+  <div class="opt recommended">
+    <h3>Both: recorded + hand-written <span class="tag">recommended</span></h3>
+    <ul class="pc pro">
+      <li>Recorded real responses prove the parser works on real data</li>
+      <li>Small hand-written files cover each error case exactly (missing field, wrong type, quota message)</li>
+    </ul>
+    <ul class="pc con">
+      <li>Recording costs a few requests of the free quota, once</li>
+      <li>The API key must be removed from recorded files and URLs before committing</li>
+    </ul>
+  </div>
+  <div class="opt">
+    <h3>Only recorded responses</h3>
+    <ul class="pc pro"><li>Realistic</li></ul>
+    <ul class="pc con"><li>Error cases are hard to provoke on purpose. Large files</li></ul>
+  </div>
+  <div class="opt">
+    <h3>Only hand-written JSON</h3>
+    <ul class="pc pro"><li>Small, exact, no quota used</li></ul>
+    <ul class="pc con"><li>Risk that the real format differs from what you assumed</li></ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="next"><span class="num">→</span>What I need from you</h2>
+<ol>
+  <li>C++20 or C++17?</li>
+  <li>Approval to add <strong>nlohmann/json</strong> and <strong>cpp-httplib</strong> as single headers in <code>third_party/</code> (or other choices)</li>
+  <li>HTTPS client: cpp-httplib + OpenSSL or libcurl (only for the live CMake option)</li>
+  <li>Price provider (after checking the current free tier) and rate provider</li>
+  <li>Match central banks by currency? (changes the E6 text in <code>PROJEKT.md</code>)</li>
+</ol>
+<p>Once these are decided, E2 can start with the parts that need none of them: <code>IHttpClient</code>, <code>IPriceSource</code>, the fake client and the error classes.</p>
+
+<footer>
+  Quota figures are approximate and come from secondary sources found on 13 Nov 2026. Check them on each provider's pricing page.
+  Sources:
+  <a href="https://blog.apilayer.com/analyzing-the-top-free-apis-for-stock-data/">apilayer blog</a>,
+  <a href="https://dev.to/nexgendata/best-free-stock-market-apis-and-data-tools-in-2026-a-developers-honest-comparison-1926">DEV Community comparison</a>,
+  <a href="https://dev.to/pickuma/alpha-vantage-vs-yahoo-finance-api-free-market-data-for-side-projects-an-honest-comparison-411o">Alpha Vantage vs Yahoo (DEV)</a>,
+  <a href="https://fgeerolf.com/data/ecb/api.html">ECB API overview</a>,
+  <a href="https://fred.stlouisfed.org/blog/2015/09/the-many-faces-of-the-federal-funds-rate/">FRED blog: fed funds series</a>,
+  <a href="https://www.federalreserve.gov/data/ddp-fred-user-guide.htm">FRED user guide</a>.
+</footer>
+
+</div>
+</body>
+</html>

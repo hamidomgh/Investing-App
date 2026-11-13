@@ -45,6 +45,9 @@ add_library(projekt_lib
     src/http_cache.cpp
     src/anfragebehandlung.cpp
     src/dateiquelle.cpp
+    src/threadpool.cpp
+    src/ergebnis_cache.cpp
+    src/gecachte_anfragebehandlung.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -85,6 +88,7 @@ add_executable(tests
     tests/test_http_cache.cpp
     tests/test_anfragebehandlung.cpp
     tests/test_dateiquelle.cpp
+    tests/test_nebenlaeufigkeit.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)
@@ -95,4 +99,5 @@ target_compile_definitions(tests PRIVATE FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests
 # Pfad zum Konfigurationsordner (config/katalog.json), damit ein Test den echten Katalog prüfen kann
 target_compile_definitions(tests PRIVATE KONFIG_DIR="${CMAKE_SOURCE_DIR}/config")
 # Erkennt automatisch alle TEST() Makros als CTest-Tests
-gtest_discover_tests(tests)             # jeder TEST() wird ein CTest-Test
+# jeder TEST() wird ein CTest-Test; TIMEOUT: ein hängender Test (z. B. Deadlock) bricht nach 60 s ab
+gtest_discover_tests(tests PROPERTIES TIMEOUT 60)

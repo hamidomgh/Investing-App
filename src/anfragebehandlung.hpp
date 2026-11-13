@@ -3,6 +3,8 @@
 
 // Anfrage und Antwort des eigenen Servers
 #include "anfrage.hpp"
+// Schnittstelle, die diese Klasse implementiert (E9)
+#include "anfrage_behandler.hpp"
 // Wertpapier (E1)
 #include "kursdaten.hpp"
 // Schnittstelle der Kursdaten-Quelle (E2)
@@ -38,7 +40,11 @@
 //   503 Anfragekontingent des Anbieters erschöpft und keine Daten im Cache
 //   500 unerwarteter interner Fehler
 // Jeder Fehler wird als JSON {"fehler": "...", "status": ...} geliefert.
-class Anfragebehandlung {
+//
+// Thread-Sicherheit (E9): behandle() verändert keine Mitglieder dieser Klasse; Katalog und Zinsentscheidungen
+// werden nur gelesen. Gleichzeitige Aufrufe sind deshalb sicher, WENN die Quelle es auch ist
+// (im Server wird sie dafür in eine SynchronisierteQuelle verpackt).
+class Anfragebehandlung : public IAnfrageBehandler {
 public:
     // wertpapiere:     Katalog der Wertpapiere (wird kopiert)
     // quelle:          Kursdaten-Quelle (Referenz, gehört dem Aufrufer)
@@ -48,7 +54,7 @@ public:
 
     // Behandelt eine Anfrage und liefert immer eine Antwort (wirft selbst keine Exceptions).
     // Nicht const, weil die Quelle beim Laden ihren Zustand ändern kann (z. B. Cache-Dateien schreiben).
-    Antwort behandle(const Anfrage& anfrage);
+    Antwort behandle(const Anfrage& anfrage) override;
 
 private:
     // Die vier Endpunkte; jeder wirft bei Fehlern eine interne Ausnahme, die behandle() in eine Antwort übersetzt

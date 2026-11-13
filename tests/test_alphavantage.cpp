@@ -269,3 +269,34 @@ TEST_F(AlphaVantageTest, AlleFehlerSindQuellenFehler) {
     fake.setzeAntwort(quelle.url("IBM"), 200, fixture("error_message.json"));
     EXPECT_THROW(quelle.ladeKurse(ibm), QuellenFehler);
 }
+
+// ---------------------------------------------------------------- Aufgezeichnete echte Antwort
+
+// Echte Antwort von Alpha Vantage für IBM, aufgezeichnet am 2026-11-13 (ohne API-Key in der Datei).
+// Beweist, dass der Parser mit dem wirklichen Format funktioniert, nicht nur mit den handgeschriebenen Dateien.
+//   100 Handelstage von 2026-06-25 bis 2026-11-13
+//   erster Tag 2026-06-25: Close 258.27; letzter Tag 2026-11-13: Open 246.62, High 247.85, Low 244.83, Close 247.14
+TEST_F(AlphaVantageTest, AufgezeichneteEchteAntwort) {
+    // Quelle anlegen
+    AlphaVantageQuelle quelle(fake, keyVariable);
+    // Fake liefert die aufgezeichnete Antwort
+    fake.setzeAntwort(quelle.url("IBM"), 200, fixture("aufgezeichnet_IBM.json"));
+    // Kurse laden, wie im echten Betrieb
+    const Kursreihe reihe = quelle.ladeKurse(ibm);
+    // "compact" liefert 100 Handelstage
+    ASSERT_EQ(reihe.groesse(), 100u);
+    // Ältester Tag zuerst
+    EXPECT_EQ(reihe[0].datum, tag(2026, 6, 25));
+    EXPECT_NEAR(reihe[0].close, 258.27, eps);
+    // Neuester Tag zuletzt, alle vier Preise
+    EXPECT_EQ(reihe[99].datum, tag(2026, 11, 13));
+    EXPECT_NEAR(reihe[99].open, 246.62, eps);
+    EXPECT_NEAR(reihe[99].high, 247.85, eps);
+    EXPECT_NEAR(reihe[99].low, 244.83, eps);
+    EXPECT_NEAR(reihe[99].close, 247.14, eps);
+    // Streng aufsteigend (die Kursreihe hätte sonst schon beim Erzeugen geworfen; hier zur Sicherheit sichtbar geprüft)
+    for (std::size_t i = 1; i < reihe.groesse(); ++i) {
+        // Jeder Tag liegt nach dem vorherigen
+        EXPECT_LT(reihe[i - 1].datum, reihe[i].datum);
+    }
+}

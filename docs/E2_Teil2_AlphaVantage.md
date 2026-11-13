@@ -16,7 +16,7 @@ The code comments are in German (like the rest of the project); this text is in 
 | Missing API key reported **before the first request** | **done** (constructor reads the key; test checks 0 requests) |
 | Catalog, a faulty entry doesn't stop the others | part 3 |
 | Real HTTPS client (CMake option) | later |
-| A recorded real answer as fixture | needs your API key (see section 7) |
+| A recorded real answer as fixture | **done** (`aufgezeichnet_IBM.json`, see section 7) |
 
 ## 2. Files
 
@@ -172,24 +172,22 @@ every test, and `TearDown()` removes it afterwards, so no test depends on anothe
 | `ZahlenOhneAnfuehrungszeichenUndLeereReihe` | JSON numbers work; empty series → empty `Kursreihe` |
 | `AlleFehlerSindQuellenFehler` | any source error can be caught as `QuellenFehler` |
 
-## 7. Still open: a recorded real answer
+## 7. The recorded real answer
 
-`PROJEKT.md` says the tests use **recorded** provider answers. That needs a real request with your key,
-which I can't do because I don't have your key. Steps, in your WSL terminal:
+`tests/fixtures/alphavantage/aufgezeichnet_IBM.json` is a real Alpha Vantage answer for IBM, recorded on
+2026-11-13 in WSL with your key (`outputsize=compact`): 100 trading days from 2026-06-25 to 2026-11-13.
+The key is only in the request URL, not in the answer; `grep -ci apikey` on the file gives `0`.
 
-```bash
-export ALPHAVANTAGE_API_KEY=...        # your key, never commit it
-curl "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&outputsize=compact&apikey=$ALPHAVANTAGE_API_KEY" \
-     -o tests/fixtures/alphavantage/aufgezeichnet_IBM.json
-```
+The test `AufgezeichneteEchteAntwort` loads it through `ladeKurse` (with the fake client) and checks the
+number of days, the first and last date, the prices of both ends, and the strict order. This proves the
+parser works on the **real** format, not only on the hand-written files, which is what `PROJEKT.md` asks
+for ("aufgezeichnete Antworten der Anbieter").
 
-The key is only in the URL, not in the answer. Check the file with `grep -i apikey` anyway before
-committing. Then I can add a test that parses it, which proves the parser works on real data and not
-only on my hand-written format.
+If the file is ever re-recorded, the expected values in that test must be updated.
 
 ## 8. Result
 
-`cmake -B build && cmake --build build && ctest --test-dir build`: 100 of 100 tests pass (13 new),
+`cmake -B build && cmake --build build && ctest --test-dir build`: 101 of 101 tests pass (14 new, including the recorded answer),
 no compiler warnings.
 
 ## 9. Possible exam questions

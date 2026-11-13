@@ -17,8 +17,15 @@ geliefert, damit die Tests ohne Netzwerk und ohne API-Key laufen.
 | `ungueltiges_datum.json` | Datum 2024-02-30 gibt es nicht |
 | `inkonsistente_kerze.json` | High unter Low (wird von E1 abgelehnt) |
 
-**Noch offen:** eine aufgezeichnete echte Antwort (`aufgezeichnet_<SYMBOL>.json`). Aufnehmen
-außerhalb des Containers mit eigenem Key, dann den Key aus der Datei entfernen (er steht nur in
-der URL, nicht in der Antwort):
+Zusätzlich eine **aufgezeichnete echte Antwort**:
+
+| Datei | Fall |
+|---|---|
+| `aufgezeichnet_IBM.json` | echte Antwort von Alpha Vantage für IBM, `compact`, aufgezeichnet am 2026-11-13: 100 Handelstage (2026-06-25 bis 2026-11-13). Enthält keinen API-Key (geprüft). |
+
+Neu aufnehmen (außerhalb des Containers, eigener Key nur in der Umgebungsvariable):
 
     curl "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&outputsize=compact&apikey=$ALPHAVANTAGE_API_KEY" -o aufgezeichnet_IBM.json
+
+Danach prüfen: `grep -ci apikey aufgezeichnet_IBM.json` muss `0` ergeben. Ändern sich die Daten,
+müssen die erwarteten Werte im Test `AlphaVantageTest.AufgezeichneteEchteAntwort` angepasst werden.

@@ -142,14 +142,20 @@ std::string AlphaVantageQuelle::url(const std::string& symbol) const {
            "&outputsize=compact&apikey=" + urlKodieren(schluessel_);
 }
 
-// Lädt die Kurse: Anfrage stellen, Status prüfen, Antwort parsen
+// Lädt die Kurse: nutzt ladeKursdaten und gibt nur die Kursreihe zurück
 Kursreihe AlphaVantageQuelle::ladeKurse(const Wertpapier& wertpapier) {
+    // Gleicher Ablauf, Hinweis wird hier nicht gebraucht
+    return ladeKursdaten(wertpapier).reihe;
+}
+
+// Lädt die Kurse: Anfrage stellen, Status prüfen, Antwort parsen, Cache-Hinweis übernehmen
+Kursdaten AlphaVantageQuelle::ladeKursdaten(const Wertpapier& wertpapier) {
     // Anfrage über die Schnittstelle (wirft bei Netzwerkfehler oder Zeitüberschreitung)
     const HttpAntwort antwort = client_.get(url(wertpapier.symbol));
     // HTTP-Status prüfen (wirft bei 401, 404, 429 usw.)
     pruefeStatus(antwort, "prices for " + wertpapier.symbol);
-    // JSON in eine Kursreihe umwandeln
-    return parse(antwort.body, wertpapier.symbol);
+    // JSON in eine Kursreihe umwandeln und die Markierung des Caches (E7) übernehmen
+    return Kursdaten{parse(antwort.body, wertpapier.symbol), antwort.veraltet, antwort.hinweis};
 }
 
 // Wandelt die JSON-Antwort in eine Kursreihe um

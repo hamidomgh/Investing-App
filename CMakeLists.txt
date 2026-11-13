@@ -43,6 +43,7 @@ add_library(projekt_lib
     src/katalog.cpp
     src/kursabruf.cpp
     src/http_cache.cpp
+    src/anfragebehandlung.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -74,9 +75,12 @@ add_executable(tests
     tests/test_alphavantage.cpp
     tests/test_katalog.cpp
     tests/test_http_cache.cpp
+    tests/test_anfragebehandlung.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)
+# Die Tests lesen JSON-Antworten der Schnittstelle (E8) mit nlohmann/json
+target_include_directories(tests SYSTEM PRIVATE third_party)
 # Pfad zu den Testdaten (aufgezeichnete und handgeschriebene Antworten), als Konstante FIXTURES_DIR im Code
 target_compile_definitions(tests PRIVATE FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures")
 # Pfad zum Konfigurationsordner (config/katalog.json), damit ein Test den echten Katalog prüfen kann

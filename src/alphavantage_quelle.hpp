@@ -33,6 +33,9 @@ public:
     // Wirft NetzwerkFehler, HttpFehler, KontingentFehler oder ParseFehler (alle von QuellenFehler abgeleitet).
     Kursreihe ladeKurse(const Wertpapier& wertpapier) override;
 
+    // Wie ladeKurse, gibt aber den Hinweis des Caches (E7) weiter, wenn die Daten veraltet sind
+    Kursdaten ladeKursdaten(const Wertpapier& wertpapier) override;
+
     // Baut die Anfrage-URL für ein Symbol (öffentlich, damit Tests die erwartete URL kennen)
     std::string url(const std::string& symbol) const;
 

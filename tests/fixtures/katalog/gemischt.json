@@ -1,0 +1,12 @@
+{
+    "wertpapiere": [
+        { "symbol": "IBM",     "name": "International Business Machines", "land": "USA",         "waehrung": "USD" },
+        { "symbol": "OHNELAND", "name": "Kein Land",                      "waehrung": "EUR" },
+        "kein Objekt",
+        { "symbol": "MBG.DEX", "name": "Mercedes-Benz Group AG",          "land": "Deutschland", "waehrung": "EUR" },
+        { "symbol": "LEER",    "name": "",                                "land": "USA",         "waehrung": "USD" },
+        { "symbol": 42,        "name": "Zahl statt Text",                 "land": "USA",         "waehrung": "USD" },
+        { "symbol": "IBM",     "name": "Doppelt",                         "land": "USA",         "waehrung": "USD" },
+        { "symbol": "7203.T",  "name": "Toyota Motor",                    "land": "Japan",       "waehrung": "JPY" }
+    ]
+}

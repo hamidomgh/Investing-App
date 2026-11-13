@@ -44,6 +44,7 @@ add_library(projekt_lib
     src/kursabruf.cpp
     src/http_cache.cpp
     src/anfragebehandlung.cpp
+    src/dateiquelle.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -51,10 +52,17 @@ target_include_directories(projekt_lib PUBLIC src)
 # PRIVATE: nur die .cpp-Dateien der Bibliothek brauchen sie, die eigenen Header nicht.
 target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
 
-# Erstellt das Hauptprogramm aus der main.cpp
-add_executable(projekt src/main.cpp)
+# Erstellt das Hauptprogramm (Server) aus main.cpp und der Netzwerkschicht.
+# http_server.cpp liegt bewusst nicht in projekt_lib: Es ist reine Übersetzung zwischen cpp-httplib und
+# Anfragebehandlung; die Logik ist in projekt_lib und dort ohne Socket getestet.
+add_executable(projekt src/main.cpp src/http_server.cpp)
 # Verlinkt das Hauptprogramm mit der Bibliothek
 target_link_libraries(projekt PRIVATE projekt_lib)
+# cpp-httplib (third_party/httplib.h); SYSTEM unterdrückt Warnungen aus fremdem Code
+target_include_directories(projekt SYSTEM PRIVATE third_party)
+# cpp-httplib braucht Threads (pthread)
+find_package(Threads REQUIRED)
+target_link_libraries(projekt PRIVATE Threads::Threads)
 
 # Tests
 enable_testing()
@@ -76,6 +84,7 @@ add_executable(tests
     tests/test_katalog.cpp
     tests/test_http_cache.cpp
     tests/test_anfragebehandlung.cpp
+    tests/test_dateiquelle.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib GTest::gtest_main)

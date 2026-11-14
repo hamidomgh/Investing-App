@@ -93,15 +93,16 @@ cmake -B build && cmake --build build
 curl "http://127.0.0.1:8080/api/indikatoren?symbol=IBM"
 ```
 
-To open it **from WSL or the browser**, the container needs a published port. `dev.sh` passes `FAUP_RUN_ARGS`
-to podman:
+To open it **from WSL or the browser**, the server must run in a container whose port is published. A port can only be
+published when a container is **created**. If the `./dev.sh` container is already running (e.g. because Claude Code runs in
+it), `FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh` only opens another shell in it and the port stays closed. So for the browser,
+start a second container from a WSL terminal **outside** the container:
 ```bash
-FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh          # start the container with the port published
-./build/projekt --host 0.0.0.0                 # inside the container
-# then in the browser on Windows/WSL: http://localhost:8080/api/wertpapiere
+podman run --rm -it -p 8080:8080 -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build/projekt --host 0.0.0.0
+# then in the browser on Windows/WSL: http://localhost:8080/
 ```
 `--host 0.0.0.0` is needed because traffic from the published port arrives on the container's network interface,
-not on its `127.0.0.1`.
+not on its `127.0.0.1`. `0.0.0.0` itself is not an address a browser can open; the program prints the `localhost` link.
 
 ## 7. Manual test (done on 2026-11-13)
 

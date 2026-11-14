@@ -5,17 +5,22 @@
 
 ## Vorbereitung
 
-1. Container mit veröffentlichtem Port starten (im WSL-Terminal, im Projektordner):
-   ```bash
-   FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh
-   ```
-2. Im Container bauen und starten:
+Wichtig: Ein Port kann nur beim **Erzeugen** eines Containers veröffentlicht werden. Läuft der Container
+von `./dev.sh` schon (z. B. weil darin Claude Code oder eine andere Shell offen ist), öffnet
+`FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh` nur eine weitere Shell darin, und der Port bleibt unveröffentlicht.
+Deshalb läuft der Server für den Browsertest in einem eigenen, zweiten Container:
+
+1. Im Container bauen und testen (wie immer):
    ```bash
    cmake -B build && cmake --build build && ctest --test-dir build
-   ./build/projekt --host 0.0.0.0
    ```
-   Erwartete Ausgabe: `MarketLens: 6 Wertpapiere, … 2 Zentralbanken (515 Zinseinträge) …` und keine Warnung zu den Zinsdaten.
-3. Im Browser unter Windows/WSL öffnen: **http://localhost:8080/**
+2. In einem **WSL-Terminal außerhalb des Containers**, im Projektordner:
+   ```bash
+   podman run --rm -it -p 8080:8080 -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build/projekt --host 0.0.0.0
+   ```
+   Erwartete Ausgabe: `MarketLens: 6 Wertpapiere, … 2 Zentralbanken (515 Zinseinträge) …`, keine Warnung zu den Zinsdaten,
+   und `Im Browser öffnen: http://localhost:8080/`. Beenden mit Strg+C in diesem Terminal.
+3. Im Browser **http://localhost:8080/** öffnen (nicht `0.0.0.0`: das ist keine Adresse, die ein Browser öffnen kann).
 
 Vorhandene Offline-Daten: Kurse nur für **IBM** (`daten/IBM.json`, 2026-06-25 bis 2026-11-13), Zinsen für Fed und EZB.
 
@@ -39,7 +44,7 @@ Vorhandene Offline-Daten: Kurse nur für **IBM** (`daten/IBM.json`, 2026-06-25 b
 | 14 | **Fehler 422** (zu wenige Daten) | MACD zurück auf `12,26,9`, von = 2026-11-01, „Anzeigen“ → „Indikatoren: Für diese Einstellungen gibt es zu wenige Kursdaten …“ (HTTP 422); Kerzen werden angezeigt | |
 | 15 | **Fehler 502** (keine Daten) | Zeitraum leeren, „MBG.DEX“ wählen → drei Meldungen „… Die Datenquelle liefert für dieses Wertpapier keine Daten“ (HTTP 502, „No offline data for MBG.DEX …“); Diagramm zeigt „Keine Kursdaten“; die Seite bleibt bedienbar | |
 | 16 | Zurück zu einem gültigen Wertpapier | „IBM“ wählen → Fehlermeldungen verschwinden, alles wird wieder angezeigt | |
-| 17 | **Server nicht erreichbar** | Im Container Strg+C (Ausgabe „MarketLens beendet.“), dann im Browser „Anzeigen“ → „Keine Verbindung zum Server. Läuft MarketLens (./build/projekt)?“ | |
+| 17 | **Server nicht erreichbar** | Im WSL-Terminal des Servers Strg+C (Ausgabe „MarketLens beendet.“), dann im Browser „Anzeigen“ → „Keine Verbindung zum Server. Läuft MarketLens (./build/projekt)?“ | |
 | 18 | Ohne externe Dienste | Server wieder starten; Browser-Entwicklerwerkzeuge (F12) → Reiter „Netzwerk“, Seite neu laden → alle Anfragen gehen an `localhost:8080` (index.html, style.css, app.js, /api/…); keine fremde Adresse | |
 | 19 | Fenstergröße | Fenster schmal ziehen (< 760 px) → Einstellungen über den Diagrammen, Diagramme werden neu gezeichnet, Tabelle scrollt seitlich statt die Seite zu verbreitern | |
 | 20 | Dunkles Schema | Betriebssystem auf dunkles Design stellen → Seite dunkel, alle Linien und Texte gut lesbar | |

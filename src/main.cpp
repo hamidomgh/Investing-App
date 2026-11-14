@@ -233,11 +233,16 @@ int main(int argc, char* argv[]) {
             server.stoppe();
         });
 
+        // Adresse für den Browser: "0.0.0.0" heißt nur "auf allen Netzwerkschnittstellen lauschen" und ist
+        // keine Adresse, die ein Browser öffnen kann. Dann ist der Server über "localhost" erreichbar
+        // (aus dem Container heraus nur mit veröffentlichtem Port, z. B. FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh).
+        const std::string browserHost = e.host == "0.0.0.0" ? "localhost" : e.host;
         // Hinweis, wo der Server zu erreichen ist
         std::cout << "MarketLens: " << katalog.wertpapiere().size() << " Wertpapiere, Kursdaten aus '" << e.daten
                   << "/', " << katalog.zentralbanken().size() << " Zentralbanken (" << zinsen.entscheidungen.size()
                   << " Zinseinträge), " << threads << " Threads\n"
-                  << "Server läuft auf http://" << e.host << ":" << e.port << "  (beenden mit Strg+C)\n"
+                  << "Server lauscht auf " << e.host << ":" << e.port << "\n"
+                  << "Im Browser öffnen: http://" << browserHost << ":" << e.port << "/  (beenden mit Strg+C)\n"
                   << std::flush;
         // Anfragen bearbeiten; kehrt nach stoppe() zurück, wenn alle Anfragen fertig und alle Threads beendet sind
         server.lausche();

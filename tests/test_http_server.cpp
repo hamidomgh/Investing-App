@@ -386,11 +386,19 @@ TEST(Weboberflaeche, WirdVomServerAusgeliefert) {
     // Die Seite bindet Skript und Gestaltung lokal ein
     EXPECT_NE(seite->body.find("src=\"app.js\""), std::string::npos);
     EXPECT_NE(seite->body.find("href=\"style.css\""), std::string::npos);
+    // Zeichenwerkzeuge (F1) als eigenes Skript, vor app.js eingebunden
+    const std::size_t zeichnenPos = seite->body.find("src=\"zeichnen.js\"");
+    ASSERT_NE(zeichnenPos, std::string::npos);
+    EXPECT_LT(zeichnenPos, seite->body.find("src=\"app.js\""));
     // Skript und Gestaltung mit richtigem Inhaltstyp (sonst führt der Browser sie nicht aus)
     const auto skript = c.Get("/app.js");
     ASSERT_TRUE(skript);
     EXPECT_EQ(skript->status, 200);
     EXPECT_NE(skript->get_header_value("Content-Type").find("javascript"), std::string::npos);
+    const auto zeichnen = c.Get("/zeichnen.js");
+    ASSERT_TRUE(zeichnen);
+    EXPECT_EQ(zeichnen->status, 200);
+    EXPECT_NE(zeichnen->get_header_value("Content-Type").find("javascript"), std::string::npos);
     const auto stil = c.Get("/style.css");
     ASSERT_TRUE(stil);
     EXPECT_EQ(stil->status, 200);
@@ -432,6 +440,6 @@ TEST(Weboberflaeche, KeineExternenAdressen) {
         // Gezählt
         ++dateien;
     }
-    // index.html, app.js, style.css
-    EXPECT_GE(dateien, 3);
+    // index.html, app.js, zeichnen.js, style.css
+    EXPECT_GE(dateien, 4);
 }

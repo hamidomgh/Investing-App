@@ -64,6 +64,24 @@
     <section class="diagramme">
       <!-- Name des Wertpapiers und letzter Kurs -->
       <h2 id="titel" class="titel">Bitte ein Wertpapier wählen</h2>
+      <!-- Werkzeugleiste der Zeichenwerkzeuge (F1); die Logik steht in zeichnen.js -->
+      <div id="werkzeuge" class="werkzeuge" role="toolbar" aria-label="Zeichenwerkzeuge">
+        <!-- Werkzeuge; data-werkzeug ist der Typ in zeichnen.js -->
+        <button type="button" data-werkzeug="auswahl">Auswählen</button>
+        <button type="button" data-werkzeug="trend">Trendlinie</button>
+        <button type="button" data-werkzeug="strahl">Strahl</button>
+        <button type="button" data-werkzeug="waagrecht">Waagrechte</button>
+        <button type="button" data-werkzeug="zone">Zone</button>
+        <button type="button" data-werkzeug="fibonacci">Fibonacci</button>
+        <!-- Magnet: Klick rastet auf Open/High/Low/Close der Kerze ein -->
+        <label class="magnet"><input id="magnet" type="checkbox" checked> Magnet</label>
+        <!-- Bearbeiten -->
+        <button type="button" id="zeichnungLoeschen" title="Entf">Löschen</button>
+        <button type="button" id="rueckgaengig" title="Strg+Z">Rückgängig</button>
+        <button type="button" id="alleLoeschen">Alle löschen</button>
+        <!-- Anleitung zum gewählten Werkzeug oder Hinweis zum Speicher -->
+        <span id="zeichenHinweis" class="klein"></span>
+      </div>
       <!-- Kursdiagramm; das SVG zeichnet app.js -->
       <div class="diagramm haupt"><svg id="kurschart" role="img" aria-label="Kursdiagramm"></svg>
         <!-- Infokasten beim Überfahren mit der Maus -->
@@ -101,7 +119,9 @@
     </section>
   </main>
 
-  <!-- Programmlogik der Seite; am Ende, damit alle Elemente oben schon existieren -->
+  <!-- Programmlogik der Seite; am Ende, damit alle Elemente oben schon existieren.
+       zeichnen.js zuerst, weil app.js das Objekt "Zeichnen" daraus benutzt (F1). -->
+  <script src="zeichnen.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

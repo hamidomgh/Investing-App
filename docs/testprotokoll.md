@@ -49,9 +49,36 @@ Vorhandene Offline-Daten: Kurse nur für **IBM** (`daten/IBM.json`, 2026-06-25 b
 | 19 | Fenstergröße | Fenster schmal ziehen (< 760 px) → Einstellungen über den Diagrammen, Diagramme werden neu gezeichnet, Tabelle scrollt seitlich statt die Seite zu verbreitern | ✅ |
 | 20 | Dunkles Schema | Betriebssystem auf dunkles Design stellen → Seite dunkel, alle Linien und Texte gut lesbar | ✅ |
 
+## F1 – Zeichenwerkzeuge (Feature, siehe `Features/F1_Zeichenwerkzeuge.md`)
+
+Vorbereitung wie oben, Wertpapier IBM, kein Zeitraum.
+
+| Nr. | Schritt | Erwartetes Ergebnis | Ergebnis |
+|---|---|---|---|
+| F1-1 | Werkzeugleiste ansehen | Über dem Kursdiagramm: Auswählen (hervorgehoben), Trendlinie, Strahl, Waagrechte, Zone, Fibonacci, Magnet (an), Löschen, Rückgängig, Alle löschen (diese drei zunächst gesperrt) | ✅ |
+| F1-2 | „Trendlinie“, zwei Punkte klicken | Nach dem ersten Klick: Anleitung in der Leiste, Mauszeiger als Fadenkreuz, gestrichelte Vorschau folgt der Maus, Infokasten zeigt „Preis an der Maus“. Nach dem zweiten Klick: feste Linie, Werkzeug wieder „Auswählen“ | ✅ |
+| F1-3 | „Strahl“, zwei Punkte klicken | Linie vom ersten Punkt durch den zweiten bis zum Rand der Zeichenfläche | ✅ |
+| F1-4 | „Waagrechte“, einmal klicken | Linie über die ganze Breite, rechts mit dem Preis beschriftet | ✅ |
+| F1-5 | „Zone“, zwei Ecken klicken | Halbdurchsichtiges Rechteck zwischen den Ecken | ✅ |
+| F1-6 | „Fibonacci“, erst ein Tief, dann ein Hoch klicken | 7 Linien mit „0 %“ beim Hoch, „100 %“ beim Tief, dazwischen 23,6 / 38,2 / 50 / 61,8 / 78,6 %. **Handrechnung:** jede Stufe s = Preis(0 %) + (Preis(100 %) − Preis(0 %)) × s; z. B. 0 % = 250,00, 100 % = 200,00 → 61,8 % = 219,10, 50 % = 225,00, 38,2 % = 230,90 | ✅ |
+| F1-7 | Magnet | Mit Magnet: Klick knapp neben das Hoch einer Kerze → Preis der Zeichnung ist genau das High (Infokasten/Beschriftung). Magnet aus → Preis ist genau die Mausposition | ✅ |
+| F1-8 | Esc beim Zeichnen | Nach dem ersten Klick Esc → Vorschau verschwindet, Werkzeug wieder „Auswählen“, nichts gezeichnet | ✅ |
+| F1-9 | Auswählen und Löschen | Klick auf eine Zeichnung → dick hervorgehoben, „Löschen“ freigegeben; Entf-Taste (oder Knopf) → entfernt; Klick daneben → Auswahl aufgehoben | ✅ |
+| F1-10 | Rückgängig | Strg+Z (oder Knopf) → letzte Änderung zurück (Zeichnung wieder da bzw. neue Zeichnung weg); mehrfach möglich | ✅ |
+| F1-11 | Alle löschen | Erster Klick → Knopf fragt „Wirklich alle löschen?“; ohne zweiten Klick nach 4 s zurück; zweiter Klick → alle Zeichnungen weg; Strg+Z bringt sie zurück | ✅ |
+| F1-12 | Fenstergröße und Zeitraum | Fenster schmaler/breiter → Zeichnungen bleiben an denselben Tagen und Preisen. Zeitraum ändern (z. B. von = 2026-09-01) → Zeichnungen mit Punkten außerhalb verschwinden, waagrechte Linien bleiben; Zeitraum leeren → alles wieder da | ✅ |
+| F1-13 | Je Wertpapier, Neuladen | Zu AAPL wechseln → keine IBM-Zeichnungen; eigene AAPL-Zeichnung anlegen; zurück zu IBM → IBM-Zeichnungen wieder da; Seite neu laden (F5) → Zeichnungen beider Wertpapiere erhalten | ✅ |
+| F1-14 | Eingabefelder | In das Feld „SMA“ klicken, Rücktaste drücken → Ziffer wird gelöscht, nicht die ausgewählte Zeichnung | ✅ |
+| F1-15 | Ohne Browser-Speicher | Privates Fenster (InPrivate) öffnen: Zeichnen funktioniert; ist der Speicher gesperrt, erscheint der Hinweis „Browser-Speicher nicht verfügbar …“ statt eines Fehlers | ✅ |
+| F1-16 | Dunkles Schema | Zeichnungen und Beschriftungen gut sichtbar | ✅ |
+
+| Datum | Browser und Version | Prüfer | Ergebnis F1 |
+|---|---|---|---|
+| 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 16 Testfälle erfüllt |
+
 ## Automatisch geprüft (zur Ergänzung, nicht Teil des manuellen Tests)
 
-- `Weboberflaeche.WirdVomServerAusgeliefert`: `/`, `/app.js`, `/style.css` mit Status 200 und richtigem Inhaltstyp
+- `Weboberflaeche.WirdVomServerAusgeliefert`: `/`, `/app.js`, `/zeichnen.js`, `/style.css` mit Status 200 und richtigem Inhaltstyp; `zeichnen.js` wird vor `app.js` eingebunden
 - `Weboberflaeche.KeineExternenAdressen`: keine Datei in `web/` enthält `http://`, `https://` oder `"//` (außer der SVG-Namensraum-Kennung)
 - Die Endpunkte, die die Seite benutzt, sind in E8/E9 getestet (Status, JSON, Fehlerfälle).
 

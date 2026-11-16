@@ -149,6 +149,8 @@ async function lade() {
   const nummer = ++ladeNummer;
   // Gemeinsame Parameter
   const basis = { symbol: el("symbol").value, von: el("von").value, bis: el("bis").value };
+  // Zeichnungen dieses Wertpapiers aus dem Browser-Speicher holen (F1)
+  Zeichnen.setzeWertpapier(basis.symbol);
   // Zusätzliche Perioden für die Indikatoren
   const perioden = {
     ...basis,
@@ -369,6 +371,8 @@ function zeichneKurschart() {
   const r = rahmen(svg, kerzen.length);
   // Ohne Kerzen nur ein Hinweis
   if (kerzen.length === 0) {
+    // Ohne Kerzen auch keine Zeichnungen (F1)
+    Zeichnen.zeichne(svg, null);
     // Text in der Mitte
     svgText(svg, r.breite / 2, r.hoehe / 2, "Keine Kursdaten", { "text-anchor": "middle" });
     // Fertig
@@ -499,12 +503,27 @@ function zeichneKurschart() {
     svgText(svg, r.rand.links + 6 + j * 80, r.rand.oben + 10, l.name, { style: `fill:var(${l.farbe});font-size:11px` });
   });
 
-  // Fadenkreuz und Infokasten beim Überfahren mit der Maus
-  fadenkreuz(svg, r, kerzen, linien);
+  // Umrechnung zwischen Pixeln und Daten für die Zeichenwerkzeuge (F1)
+  const kontext = {
+    // Rahmen mit x(i), Tagesbreite und Rändern
+    r,
+    // Preis -> y-Pixel
+    y,
+    // y-Pixel -> Preis (Umkehrung von y)
+    preisAusY: (py) => ymax - ((py - r.rand.oben) / (r.hoehe - r.rand.oben - r.rand.unten)) * (ymax - ymin),
+    // Kerzen und Datum -> Position
+    kerzen,
+    indexNachDatum,
+  };
+  // Eigene Zeichnungen über den Kerzen und Indikatoren (F1)
+  Zeichnen.zeichne(svg, kontext);
+
+  // Fadenkreuz und Infokasten beim Überfahren mit der Maus (ganz oben, damit es die Mausereignisse erhält)
+  fadenkreuz(svg, r, kerzen, linien, kontext);
 }
 
-// Senkrechte Linie und Infokasten, die der Maus folgen
-function fadenkreuz(svg, r, kerzen, linien) {
+// Senkrechte Linie und Infokasten, die der Maus folgen; gibt Mausereignisse auch an die Zeichenwerkzeuge (F1)
+function fadenkreuz(svg, r, kerzen, linien, kontext) {
   // Senkrechte Linie, zunächst unsichtbar
   const strich = svgEl("line", { y1: r.rand.oben, y2: r.hoehe - r.rand.unten, class: "raster", visibility: "hidden" }, svg);
   // Unsichtbare Fläche über dem Diagramm, die die Mausbewegungen empfängt
@@ -513,11 +532,27 @@ function fadenkreuz(svg, r, kerzen, linien) {
   }, svg);
   // Infokasten
   const info = el("info");
+  // Mausposition relativ zum SVG (x und y)
+  const position = (ereignis) => {
+    // Lage des SVG auf der Seite
+    const box = svg.getBoundingClientRect();
+    // Abstand vom linken und oberen Rand
+    return { mx: ereignis.clientX - box.left, my: ereignis.clientY - box.top };
+  };
+  // Klick (oder Antippen): an die Zeichenwerkzeuge (F1)
+  flaeche.addEventListener("click", (ereignis) => {
+    // Position
+    const { mx, my } = position(ereignis);
+    // Weitergeben
+    Zeichnen.klick(mx, my);
+  });
   // Maus bewegt sich
   flaeche.addEventListener("mousemove", (ereignis) => {
     // Mausposition relativ zum SVG
-    const box = svg.getBoundingClientRect();
-    const mx = ereignis.clientX - box.left;
+    const { mx, my } = position(ereignis);
+    // Beim Zeichnen ein Fadenkreuz-Mauszeiger und eine Vorschau (F1)
+    flaeche.style.cursor = Zeichnen.aktiv() ? "crosshair" : "default";
+    Zeichnen.bewege(mx, my);
     // Nächster Tag
     const i = Math.min(kerzen.length - 1, Math.max(0, Math.floor((mx - r.rand.links) / r.tag)));
     // Kerze dieses Tages
@@ -539,6 +574,8 @@ function fadenkreuz(svg, r, kerzen, linien) {
     // RSI an diesem Tag, falls vorhanden
     const rsi = zustand.indikatoren ? rsiWerte()[i] : null;
     if (rsi !== null && rsi !== undefined) zeilen.push(`RSI: ${zahl.format(rsi)}`);
+    // Beim Zeichnen zusätzlich der Preis an der Mausposition (F1)
+    if (Zeichnen.aktiv()) zeilen.push(`Preis an der Maus: ${zahl.format(kontext.preisAusY(my))}`);
     // Text setzen (jede Zeile ein eigenes div, als reiner Text)
     info.replaceChildren(...zeilen.map((z) => { const d = document.createElement("div"); d.textContent = z; return d; }));
     // Anzeigen
@@ -549,6 +586,8 @@ function fadenkreuz(svg, r, kerzen, linien) {
     // Linie und Kasten verstecken
     strich.setAttribute("visibility", "hidden");
     info.hidden = true;
+    // Vorschau der Zeichenwerkzeuge ausblenden (F1)
+    Zeichnen.verlasse();
   });
 }
 
@@ -732,6 +771,8 @@ function zeigeEreignisse() {
 
 // Wird beim Laden der Seite ausgeführt
 async function start() {
+  // Werkzeugleiste und Tasten der Zeichenwerkzeuge verbinden (F1)
+  Zeichnen.init();
   // Liste der Wertpapiere laden
   try {
     // Anfrage

@@ -1,0 +1,22 @@
+# Features
+
+Beschreibungen neuer Funktionen, **bevor** sie gebaut werden. Jede Datei beschreibt Ziel, Umfang, Verhalten,
+betroffene Dateien, offene Entscheidungen und die Prüfung. Erst wenn eine Beschreibung bestätigt ist, wird sie
+umgesetzt; danach wird der Status hier aktualisiert.
+
+Diese Funktionen gehen über die Definitions of Done in `PROJEKT.md` hinaus. Sie dürfen keine bestehende
+Eigenschaft (E1–E10) und keinen bestehenden Test verschlechtern.
+
+| Nr. | Feature | Bereich | Status |
+|---|---|---|---|
+| F1 | [Zeichenwerkzeuge im Kursdiagramm](F1_Zeichenwerkzeuge.md) | nur Weboberfläche (`web/`) | **umgesetzt** (2026-11-16), Erklärung `docs/F1_Zeichenwerkzeuge.md`; Browsertest F1-1…F1-16 am 2026-11-16 bestanden |
+| F2 | [Erklärungen („?“) zu allen Zahlen](F2_Erklaerungen.md) | nur Weboberfläche (`web/`) | Öffnen beim Überfahren bestätigt; Punkte 2–5 offen |
+
+## Vorlage für neue Features
+
+1. Ziel (ein, zwei Sätze, aus Sicht des Benutzers)
+2. Umfang: was dazugehört und was ausdrücklich nicht
+3. Verhalten im Detail
+4. Betroffene Dateien (und ob Server/C++ betroffen sind)
+5. Offene Entscheidungen mit Empfehlung
+6. Prüfung: automatische Tests und/oder neue Fälle im Testprotokoll

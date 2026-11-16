@@ -24,6 +24,8 @@
   --pivot: #6b6f76;
   --ereignis: #b07d00;
   --signal: #a05a00;
+  /* Eigene Zeichnungen (F1) */
+  --zeichnung: #0b7285;
   /* Fehler und Hinweise */
   --fehler-grund: #f8e7e5;
   --hinweis-grund: #fbf1dc;
@@ -50,6 +52,7 @@
     --pivot: #a3a8b0;
     --ereignis: #e8c15a;
     --signal: #f0b45e;
+    --zeichnung: #66d9e8;
     --fehler-grund: #3a2422;
     --hinweis-grund: #3a2f17;
     /* Formularelemente und Bildlaufleisten dunkel */
@@ -202,3 +205,16 @@ th { font-size: .78rem; color: var(--leise); font-weight: 600; }
 /* Elemente im SVG: Raster, Achsenbeschriftung */
 .raster { stroke: var(--raster); stroke-width: 1; }
 .achse { fill: var(--leise); font-size: 11px; }
+
+/* Werkzeugleiste der Zeichenwerkzeuge (F1): Knöpfe in einer Zeile, brechen bei Bedarf um */
+.werkzeuge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
+/* Knöpfe der Leiste schlicht (nicht blau gefüllt wie "Anzeigen") */
+.werkzeuge button { background: var(--karte); color: var(--text); border-color: var(--linie); padding: 3px 8px; font-size: .85rem; }
+/* Gewähltes Werkzeug hervorgehoben */
+.werkzeuge button.aktiv { background: var(--zeichnung); border-color: var(--zeichnung); color: var(--karte); }
+/* Gesperrte Knöpfe blass */
+.werkzeuge button:disabled { opacity: .45; cursor: default; }
+/* Magnet-Schalter */
+.werkzeuge .magnet { display: flex; align-items: center; gap: 4px; font-size: .85rem; }
+/* Hinweis rechts daneben */
+.werkzeuge .klein { margin: 0 0 0 6px; }

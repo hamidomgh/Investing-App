@@ -126,8 +126,10 @@ compiler warnings. Each step has an English explanation file in `docs/`.
 - Carried out the browser test of E10 (all 20 cases passed).
 - Recorded real prices for the other five securities.
 - Designed, built and browser-tested two new features: **F1 drawing tools** and **F2 "?" explanations**.
+- Added a second price provider, **F3 Twelve Data**, running as a second server next to Alpha Vantage. Finnhub was checked first
+  and dropped. F3 was built offline on a branch, tested in the browser and merged into `main`.
 
-At the end, **193 tests** pass with no compiler warnings, and all browser tests (E10, F1, F2) passed.
+At the end, **209 tests** pass with no compiler warnings, and all browser tests (E10, F1, F2, F3) passed.
 
 ### Commits
 
@@ -136,6 +138,10 @@ At the end, **193 tests** pass with no compiler warnings, and all browser tests 
 | `d0b3a30` | real prices for AAPL, MBG.DEX, TSCO.LON, SHOP.TRT, RELIANCE.BSE; Tesco currency `GBX`; 2 new tests; E10 browser test recorded |
 | `e31d594` | F1: drawing tools in the price chart; `Features/` with the descriptions of F1 and F2 |
 | `22d3a1b` | F2: "?" explanations for all numbers and indicators |
+| `ca613a0` | `SESSIONS.md` sessions 2 and 3 (first part); Stufe 2 draft updated to 193 tests |
+| `89ba285` | F3 description, first version for Finnhub |
+| `af58817` | F3 description switched to Twelve Data (port 8081, US only); file renamed to `F3_Zweiter_Anbieter.md` |
+| `6f5d021` | F3: Twelve Data as second provider, two servers side by side (offline); built on branch `zweiter-anbieter`, then merged into `main` (fast-forward) |
 
 ### Step by step
 
@@ -168,6 +174,30 @@ At the end, **193 tests** pass with no compiler warnings, and all browser tests 
    - **Browser test:** explanations low on the page were sometimes cut off. The cause was that the height was measured at the
      old position, where the window was narrower. Fixed: it's now measured at full width, moves above the "?" when there's no
      room below, and limits its height with scrolling inside the window. Case F2-17 was added, and F2-1 … F2-17 then all passed.
+6. **F3 – choosing a second provider.** The goal was a second provider with a larger free quota, running as a second server next
+   to Alpha Vantage. Every candidate was checked with **one test request with your key before any code was written** (step 0):
+   - **Finnhub** (60 requests/minute): `"You don't have access to this resource."` even for Apple. Daily prices are paid only,
+     so Finnhub was dropped.
+   - **Twelve Data:** free daily prices for US stocks (Apple). Xetra (Mercedes) needs a paid plan ("Grow or Venture plan").
+   - **Decision:** Twelve Data on its own server on port 8081, US securities only. Separate price folders, cache and API key per
+     provider; the FRED data and the catalog are shared and only read.
+7. **F3 – built offline on the branch `zweiter-anbieter`:**
+   - **New `TwelveDataQuelle`:** its errors are evaluated from both the HTTP status and the `status`/`code` in the body.
+   - **New optional catalog field `symbole`:** one symbol per provider. Only IBM and AAPL have a `twelvedata` entry.
+   - **New option `--quelle alphavantage|twelvedata`;** every answer now carries an `anbieter` field, and the page shows it in
+     the header and the tab title.
+   - **Folder move:** Alpha Vantage's files moved to `daten/alphavantage/`. Your recordings for IBM and AAPL are in
+     `daten/twelvedata/`.
+   - **Your recordings:** the same 100 trading days as Alpha Vantage, closes within **0.01**, volumes differ, and no key in the
+     files.
+   - **Alpha Vantage is unaffected:** its parser is unchanged, and all 193 earlier tests still pass. Only the offline-data test
+     needed the new folder path, and it now also checks the count of six.
+   - **16 new tests,** including a day-by-day price comparison of both providers.
+   - **Two servers really ran side by side** in the container. Port in use and an unknown `--quelle` are rejected, and stopping
+     one server doesn't affect the other.
+   - **Browser test:** F3-1 … F3-10 all passed. Before the test I corrected two cases: with `podman run -p`, an occupied port is
+     reported by podman itself, and the `--quelle finnhub` check has to run inside a container.
+   - **Merged into `main`** as a fast-forward.
 
 ### Decisions made today
 
@@ -178,14 +208,19 @@ At the end, **193 tests** pass with no compiler warnings, and all browser tests 
 | F2 opening | on mouse hover (keyboard focus and tapping in addition) |
 | F2 content | current values included; one "?" per chart; German; "keine Anlageberatung" note; also explain the drawing tools |
 | Tesco currency | `GBX` (pence) instead of `GBP` |
+| F3 second provider | Twelve Data (Finnhub dropped: daily prices only in the paid tier) |
+| F3 scope | own server on port 8081, US securities only (IBM, AAPL) |
+| F3 storage | separate `daten/<provider>/`, cache folder and API key per provider; FRED data and catalog shared |
+| F3 order | offline first on branch `zweiter-anbieter`; live HTTPS client later; merged into `main` after the browser test |
 
 ### Open / next steps
 
 1. **Your last step:** copy the blocks from `docs/STUFE2_Entwurf.md` into the 20 empty "Metrik / Test (Stufe 2)" fields in
-   `PROJEKT.md`. The draft is up to date (193 tests; the one test of F2 is listed separately). F1 and F2 go beyond the Definitions of Done
-   and don't need a block.
-2. **Edge version:** enter it in the three sign-off lines of `docs/testprotokoll.md`.
-3. **Optional:**
-   - live HTTPS client (needs `libssl-dev`)
+   `PROJEKT.md`. The draft is up to date (209 tests; the tests of F2 and F3 are listed separately). F1, F2 and F3 go beyond the
+   Definitions of Done and don't need a block.
+2. **Edge version:** enter it in the four sign-off lines of `docs/testprotokoll.md` (E10, F1, F2, F3).
+3. **Push** `main` from WSL. The branch `zweiter-anbieter` can be deleted (`git branch -d zweiter-anbieter`), since everything is in `main`.
+4. **Optional:**
+   - live HTTPS client for both providers (needs `libssl-dev`); then `--cache cache/<provider>` for F3
    - ThreadSanitizer run
    - removing the duplicate test `Kerze.NegativesVolumenWirdAbgelehnt`

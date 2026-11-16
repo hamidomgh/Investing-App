@@ -2,7 +2,7 @@
 
 Vorschläge zum Übernehmen in `PROJEKT.md`. Diese Datei ändert `PROJEKT.md` nicht. Bitte vor dem Kopieren
 prüfen und bei Bedarf anpassen. Alle Testnamen und Zahlen beziehen sich auf den Stand vom 2026-11-13
-(193 Tests, alle grün; Stand 2026-11-16 nach F1 und F2). Jeder Block hat genau das Format der leeren Felder in `PROJEKT.md`.
+(209 Tests, alle grün; Stand 2026-11-16 nach F1, F2 und F3). Jeder Block hat genau das Format der leeren Felder in `PROJEKT.md`.
 
 Einzelne Eigenschaft prüfen: `ctest --test-dir build -R "<Muster>"` (das Muster steht jeweils unter „Test“).
 Alles prüfen: `cmake -B build && cmake --build build && ctest --test-dir build`.
@@ -51,9 +51,9 @@ Alles prüfen: `cmake -B build && cmake --build build && ctest --test-dir build`
 
 ---
 
-## Zuordnung aller 193 Tests
+## Zuordnung aller 209 Tests
 
-Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben zusammen genau 193 Tests.
+Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben zusammen mit den Mustern der Zusatz-Features genau 209 Tests.
 
 | Eigenschaft | Anzahl Tests |
 |---|---|
@@ -67,9 +67,10 @@ Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben 
 | E8 | 15 ohne Socket + 1 über den echten Server (`HttpServer.StatischeDateienUndJsonFuerAnderePfade`) |
 | E9 | 22 |
 | E10 | 2 + manuelles Testprotokoll |
-| Zusatz-Features F1/F2 (nicht Teil von `PROJEKT.md`) | 1 (`Weboberflaeche.ErklaerungenVollstaendig`) |
+| Zusatz-Feature F2 (nicht Teil von `PROJEKT.md`) | 1 (`Weboberflaeche.ErklaerungenVollstaendig`) |
+| Zusatz-Feature F3 (nicht Teil von `PROJEKT.md`) | 16 (`-R "^(SymboleJeAnbieter\|TwelveData[A-Za-z]*)\."`) |
 | Vorlage (`Statistik`, nicht Teil von MarketLens) | 4 |
-| **Summe** | **193** |
+| **Summe** | **209** |
 
 Das Muster von E9 (`^(…|HttpServer)\.`) liefert 23 Tests, weil es den einen `HttpServer`-Test von E8 mitfasst. Dieser Test
 belegt außerdem einen Teil von E10 (Auslieferung statischer Dateien).

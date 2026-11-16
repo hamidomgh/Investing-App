@@ -475,3 +475,35 @@ TEST(FredAufgezeichnet, EreignisstudieMitEchtenDaten) {
     EXPECT_DOUBLE_EQ(ereignisse[0].kursNachher, 229.55);
     EXPECT_NEAR(ereignisse[0].veraenderung, -0.0345, 1e-4);
 }
+
+// Echte Daten für ein Euro-Land: EZB-Zinsdaten (FRED) + Mercedes-Benz-Kurse (Alpha Vantage, MBG.DEX), beide aufgezeichnet.
+//   Die EZB ist laut Katalog für Deutschland zuständig (Länderliste), MBG.DEX hat land = "Deutschland".
+//   Kurse 2026-06-29 bis 2026-11-13: die EZB-Änderung vom 2026-06-17 liegt davor und wird übersprungen.
+//   Änderung auf 2,50 % wirksam Mi 2026-09-16 -> Reaktionstag Do 2026-09-17
+//   MBG.DEX Schlusskurs Mi 45,365, Do 46,195 -> Veränderung 46,195 / 45,365 - 1 = +1,83 %
+TEST(FredAufgezeichnet, EzbUndDeutscheAktie) {
+    // EZB mit der Länderliste aus dem echten Katalog
+    const Katalog katalog = Katalog::ausDatei(std::string(KONFIG_DIR) + "/katalog.json");
+    ASSERT_EQ(katalog.zentralbanken().size(), 2u);
+    const Zentralbank& ezb = katalog.zentralbanken()[1];
+    ASSERT_EQ(ezb.name, "EZB");
+    // Entscheidungen aus der echten FRED-Antwort (eine pro Euro-Land)
+    const auto entscheidungen = FredQuelle::leiteEntscheidungenAb(
+        FredQuelle::leseBeobachtungen(fixture("aufgezeichnet_ECBDFR.json"), "ECBDFR"), ezb);
+    // Mercedes-Kurse aus der echten Alpha-Vantage-Antwort
+    DateiQuelle kurse(std::string(FIXTURES_DIR) + "/alphavantage");
+    const Wertpapier mbg("aufgezeichnet_MBG.DEX", "Mercedes-Benz Group AG", "Deutschland", "EUR");
+    const Kursreihe reihe = kurse.ladeKurse(mbg);
+    ASSERT_EQ(reihe.groesse(), 100u);
+    // Ereignisstudie
+    const auto ereignisse = Ereignisstudie(entscheidungen).auswerten(mbg, reihe);
+    // Genau eine EZB-Änderung im Zeitraum, und zwar nur einmal (nicht einmal pro Euro-Land)
+    ASSERT_EQ(ereignisse.size(), 1u);
+    EXPECT_EQ(ereignisse[0].entscheidung.zentralbank, "EZB");
+    EXPECT_EQ(ereignisse[0].entscheidung.datum, tag(2026, 9, 16));
+    EXPECT_DOUBLE_EQ(ereignisse[0].entscheidung.leitzins, 2.5);
+    EXPECT_EQ(ereignisse[0].reaktionstag, tag(2026, 9, 17));
+    EXPECT_DOUBLE_EQ(ereignisse[0].kursVorher, 45.365);
+    EXPECT_DOUBLE_EQ(ereignisse[0].kursNachher, 46.195);
+    EXPECT_NEAR(ereignisse[0].veraenderung, 0.0183, 1e-4);
+}

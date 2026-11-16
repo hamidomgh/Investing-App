@@ -17,7 +17,7 @@ The code comments are in German (like the rest of the project); this text is in 
 | event study | vertical markers in the chart + table |
 | errors shown understandably | red box: area + plain-language explanation per status + the server's exact message |
 | no external services | plain HTML/CSS/JS, charts drawn by our own code; test `Weboberflaeche.KeineExternenAdressen` |
-| manual test protocol | `docs/testprotokoll.md`, 20 cases, **to be carried out by you in a browser** |
+| manual test protocol | `docs/testprotokoll.md`, 20 cases, **carried out 2026-11-16, all passed** |
 
 ## 2. Files
 
@@ -144,9 +144,8 @@ once per frame.
 - a script checked that all brackets, strings and template literals in `app.js` are balanced;
 - every `el("…")` id used in `app.js` exists in `index.html`, and vice versa.
 
-**By you, in a browser:** `docs/testprotokoll.md`, 20 cases including all error types and "no external requests" in the browser's
-network tab. Only that shows that the page really renders and behaves as described. Please fill in the result column and the
-date/browser line.
+**By you, in a browser (2026-11-16):** all 20 cases of `docs/testprotokoll.md` passed, including every error type and "no
+external requests" in the browser's network tab. That completes the E10 Definition of Done.
 
 ## 8. Possible exam questions
 

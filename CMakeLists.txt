@@ -110,6 +110,8 @@ target_compile_definitions(tests PRIVATE FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests
 target_compile_definitions(tests PRIVATE KONFIG_DIR="${CMAKE_SOURCE_DIR}/config")
 # Pfad zum Ordner der Weboberfläche (E10), damit ein Test die echten Dateien prüfen kann
 target_compile_definitions(tests PRIVATE WEB_DIR="${CMAKE_SOURCE_DIR}/web")
+# Pfad zu den Offline-Daten (daten/), damit ein Test alle Kursdateien des Katalogs prüfen kann
+target_compile_definitions(tests PRIVATE DATEN_DIR="${CMAKE_SOURCE_DIR}/daten")
 # Erkennt automatisch alle TEST() Makros als CTest-Tests
 # jeder TEST() wird ein CTest-Test; TIMEOUT: ein hängender Test (z. B. Deadlock) bricht nach 60 s ab
 gtest_discover_tests(tests PROPERTIES TIMEOUT 60)

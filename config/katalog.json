@@ -3,7 +3,7 @@
         { "symbol": "IBM",          "name": "International Business Machines", "land": "USA",            "waehrung": "USD" },
         { "symbol": "AAPL",         "name": "Apple Inc.",                      "land": "USA",            "waehrung": "USD" },
         { "symbol": "MBG.DEX",      "name": "Mercedes-Benz Group AG",          "land": "Deutschland",    "waehrung": "EUR" },
-        { "symbol": "TSCO.LON",     "name": "Tesco PLC",                       "land": "Großbritannien", "waehrung": "GBP" },
+        { "symbol": "TSCO.LON",     "name": "Tesco PLC",                       "land": "Großbritannien", "waehrung": "GBX" },
         { "symbol": "SHOP.TRT",     "name": "Shopify Inc.",                    "land": "Kanada",         "waehrung": "CAD" },
         { "symbol": "RELIANCE.BSE", "name": "Reliance Industries Ltd.",        "land": "Indien",         "waehrung": "INR" }
     ],

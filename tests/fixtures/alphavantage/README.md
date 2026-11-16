@@ -21,6 +21,7 @@ Zusätzlich eine **aufgezeichnete echte Antwort**:
 
 | Datei | Fall |
 |---|---|
+| `aufgezeichnet_MBG.DEX.json` | echte Antwort für Mercedes-Benz (Xetra), aufgezeichnet am 2026-11-16: 100 Handelstage (2026-06-29 bis 2026-11-13). Für den Test der EZB-Ereignisstudie mit echten Daten. Ohne API-Key (geprüft). |
 | `aufgezeichnet_IBM.json` | echte Antwort von Alpha Vantage für IBM, `compact`, aufgezeichnet am 2026-11-13: 100 Handelstage (2026-06-25 bis 2026-11-13). Enthält keinen API-Key (geprüft). |
 
 Neu aufnehmen (außerhalb des Containers, eigener Key nur in der Umgebungsvariable):

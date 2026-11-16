@@ -1,5 +1,7 @@
 // Die Teile, die hier getestet werden
 #include "alphavantage_quelle.hpp"
+// Offline-Kursquelle für den Test der Dateien in daten/
+#include "dateiquelle.hpp"
 #include "katalog.hpp"
 #include "kursabruf.hpp"
 // Fake-HTTP-Client für Tests ohne Netzwerk
@@ -227,4 +229,25 @@ TEST(Kursabruf, LeereListe) {
     // Beide Listen leer
     EXPECT_TRUE(e.erfolgreich.empty());
     EXPECT_TRUE(e.fehler.empty());
+}
+
+// ---------------------------------------------------------------- Offline-Daten im Repository
+
+// Für jedes Wertpapier des echten Katalogs liegt in daten/ eine gültige Datei, die sich vollständig laden lässt
+// (gleiche Prüfungen wie eine echte Antwort, inklusive der Kerzen-Validierung aus E1).
+// Bewusst ohne feste Kurswerte, damit der Test auch nach einer neuen Aufnahme der Dateien gilt.
+TEST(OfflineDaten, JedesWertpapierDesKatalogsIstLadbar) {
+    // Echter Katalog
+    const Katalog k = Katalog::ausDatei(std::string(KONFIG_DIR) + "/katalog.json");
+    // Quelle auf den Ordner daten/ (DATEN_DIR setzt CMake)
+    DateiQuelle quelle(DATEN_DIR);
+    // Jedes Wertpapier laden
+    for (const Wertpapier& wp : k.wertpapiere()) {
+        // Hier landet die Reihe
+        Kursreihe reihe;
+        // Darf keinen Fehler werfen
+        ASSERT_NO_THROW(reihe = quelle.ladeKurse(wp)) << wp.symbol;
+        // Und muss Kerzen enthalten (mindestens 34 für MACD 12,26,9 mit den Standardwerten der Schnittstelle)
+        EXPECT_GE(reihe.groesse(), 34u) << wp.symbol;
+    }
 }

@@ -2,7 +2,7 @@
 
 Vorschläge zum Übernehmen in `PROJEKT.md`. Diese Datei ändert `PROJEKT.md` nicht. Bitte vor dem Kopieren
 prüfen und bei Bedarf anpassen. Alle Testnamen und Zahlen beziehen sich auf den Stand vom 2026-11-13
-(192 Tests, alle grün; Stand 2026-11-16). Jeder Block hat genau das Format der leeren Felder in `PROJEKT.md`.
+(193 Tests, alle grün; Stand 2026-11-16 nach F1 und F2). Jeder Block hat genau das Format der leeren Felder in `PROJEKT.md`.
 
 Einzelne Eigenschaft prüfen: `ctest --test-dir build -R "<Muster>"` (das Muster steht jeweils unter „Test“).
 Alles prüfen: `cmake -B build && cmake --build build && ctest --test-dir build`.
@@ -47,13 +47,13 @@ Alles prüfen: `cmake -B build && cmake --build build && ctest --test-dir build`
 
 ### E10: Weboberfläche
 **Metrik (Stufe 2):** Alle 20 Testfälle des manuellen Testprotokolls sind erfüllt: Auswahl, Kursdiagramm, Indikatoren, Support/Resistance, Ereignisstudie, Fehlermeldungen für 400, 422, 502 und „Server nicht erreichbar“, Fenstergröße und dunkles Schema. Im Netzwerk-Reiter des Browsers gehen 100 % der Anfragen an den eigenen Server, und 0 Dateien in `web/` enthalten eine externe Adresse (automatisch geprüft).
-**Test (Stufe 2):** Manuelles Testprotokoll `docs/testprotokoll.md` (20 Fälle, durchgeführt am 2026-11-16, alle erfüllt). Ergänzend 2 automatische Tests (`-R "^Weboberflaeche\."`): `Weboberflaeche.WirdVomServerAusgeliefert` (Seite, Skript und Gestaltung mit richtigem Inhaltstyp) und `Weboberflaeche.KeineExternenAdressen`.
+**Test (Stufe 2):** Manuelles Testprotokoll `docs/testprotokoll.md` (20 Fälle, durchgeführt am 2026-11-16, alle erfüllt). Ergänzend 2 automatische Tests: `Weboberflaeche.WirdVomServerAusgeliefert` (Seite, Skripte und Gestaltung mit richtigem Inhaltstyp) und `Weboberflaeche.KeineExternenAdressen`. Das Muster `-R "^Weboberflaeche\."` liefert 3 Tests; der dritte, `Weboberflaeche.ErklaerungenVollstaendig`, gehört zum Zusatz-Feature F2.
 
 ---
 
-## Zuordnung aller 192 Tests
+## Zuordnung aller 193 Tests
 
-Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben zusammen genau 192 Tests.
+Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben zusammen genau 193 Tests.
 
 | Eigenschaft | Anzahl Tests |
 |---|---|
@@ -67,8 +67,9 @@ Geprüft mit `ctest --test-dir build -N -R "<Muster>"`: Die Muster oben ergeben 
 | E8 | 15 ohne Socket + 1 über den echten Server (`HttpServer.StatischeDateienUndJsonFuerAnderePfade`) |
 | E9 | 22 |
 | E10 | 2 + manuelles Testprotokoll |
+| Zusatz-Features F1/F2 (nicht Teil von `PROJEKT.md`) | 1 (`Weboberflaeche.ErklaerungenVollstaendig`) |
 | Vorlage (`Statistik`, nicht Teil von MarketLens) | 4 |
-| **Summe** | **192** |
+| **Summe** | **193** |
 
 Das Muster von E9 (`^(…|HttpServer)\.`) liefert 23 Tests, weil es den einen `HttpServer`-Test von E8 mitfasst. Dieser Test
 belegt außerdem einen Teil von E10 (Auslieferung statischer Dateien).

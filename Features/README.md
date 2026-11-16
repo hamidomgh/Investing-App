@@ -10,7 +10,7 @@ Eigenschaft (E1–E10) und keinen bestehenden Test verschlechtern.
 | Nr. | Feature | Bereich | Status |
 |---|---|---|---|
 | F1 | [Zeichenwerkzeuge im Kursdiagramm](F1_Zeichenwerkzeuge.md) | nur Weboberfläche (`web/`) | **umgesetzt** (2026-11-16), Erklärung `docs/F1_Zeichenwerkzeuge.md`; Browsertest F1-1…F1-16 am 2026-11-16 bestanden |
-| F2 | [Erklärungen („?“) zu allen Zahlen](F2_Erklaerungen.md) | nur Weboberfläche (`web/`) | Öffnen beim Überfahren bestätigt; Punkte 2–5 offen |
+| F2 | [Erklärungen („?“) zu allen Zahlen](F2_Erklaerungen.md) | nur Weboberfläche (`web/`) | **umgesetzt** (2026-11-16), Erklärung `docs/F2_Erklaerungen.md`; Browsertest F2-1…F2-17 am 2026-11-16 bestanden |
 
 ## Vorlage für neue Features
 

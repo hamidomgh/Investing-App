@@ -76,9 +76,38 @@ Vorbereitung wie oben, Wertpapier IBM, kein Zeitraum.
 |---|---|---|---|
 | 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 16 Testfälle erfüllt |
 
+## F2 – Erklärungen „?“ (Feature, siehe `Features/F2_Erklaerungen.md`)
+
+Vorbereitung wie oben, Wertpapier IBM, kein Zeitraum, Standardperioden.
+
+| Nr. | Schritt | Erwartetes Ergebnis | Ergebnis |
+|---|---|---|---|
+| F2-1 | Maus über das „?“ neben „SMA“ | Fenster mit Titel, Absätzen „was / wie / lesen“, fett „Aktuell: SMA 20 am letzten Tag = …“, darunter kursiv „Übliche Deutung, keine Anlageberatung.“ Maus weg → Fenster schließt nach kurzer Zeit | ✅ |
+| F2-2 | Maus vom „?“ in das Fenster bewegen | Fenster bleibt offen, kein Flackern; Maus aus dem Fenster → schließt | ✅ |
+| F2-3 | SMA auf 5, „Anzeigen“, dann „?“ bei SMA | Text nennt „SMA 5“ und „Für die ersten 4 Tage …“; der aktuelle Wert entspricht der SMA-Linie am letzten Tag (Infokasten) | ✅ |
+| F2-4 | Alle 8 „?“ in den Einstellungen | SMA, EMA (mit α = 0,0952 bei 20), Bollinger, Support/Resistance (Fenster 5, Toleranz 2 %), Pivot-Punkte, Zinsentscheidungen, RSI, MACD zeigen jeweils die passende Erklärung | ✅ |
+| F2-5 | Alle „?“ bei den Kennzahlen | Zeitraum, Handelstage, Veränderung, Volatilität, Maximaler Drawdown, Pivot (dreimal derselbe Text), Niveaus, Währung; jede „Aktuell“-Zeile stimmt mit der angezeigten Kennzahl überein (z. B. Drawdown, P/R1/R2/S1/S2) | ✅ |
+| F2-6 | TSCO.LON wählen, „?“ bei „Währung“ | „Aktuell: GBX (Pence)“, Erklärung 100 GBX = 1 GBP | ✅ |
+| F2-7 | „?“ oben rechts in Kurs-, RSI- und MACD-Diagramm | Erklärung der Kerzen und Markierungen bzw. von RSI und MACD | ✅ |
+| F2-8 | „?“ in der Werkzeugleiste | Erklärung aller Zeichenwerkzeuge, Magnet und Fibonacci-Stufen | ✅ |
+| F2-9 | „?“ bei „Ereignisstudie“ und bei allen 7 Spaltenköpfen | Passende Erklärung; „Wirksam ab“ erklärt, dass es nicht der Sitzungstag ist | ✅ |
+| F2-10 | „?“ bei der letzten Spalte „Veränderung“ (rechter Rand) | Fenster bleibt vollständig im sichtbaren Bereich | ✅ |
+| F2-11 | Tastatur: mit Tab zu einem „?“ | Fenster öffnet beim Fokus; Esc schließt | ✅ |
+| F2-12 | Klick auf das „?“ neben „RSI“ | Fenster öffnet; das Kästchen „RSI“ wird **nicht** umgeschaltet | ✅ |
+| F2-13 | Schmales Fenster bzw. Touch (F12 → Gerätesymbolleiste) | Antippen eines „?“ öffnet, Antippen außerhalb schließt; Fenster passt in die Breite | ✅ |
+| F2-14 | Fehlerfall: von = 2026-11-01, „Anzeigen“, dann „?“ bei „RSI“ | Erklärung erscheint ohne „Aktuell“-Satz; nirgends „undefined“ oder leere Platzhalter | ✅ |
+| F2-15 | Dunkles Schema | „?“ und Fenster gut lesbar | ✅ |
+| F2-17 | **Erklärungen unten auf der Seite** (nach Korrektur 2026-11-16) | Ganz nach unten scrollen; „?“ bei „Ereignisstudie“ und allen Spalten der Tabelle überfahren: Fenster erscheint vollständig (bei wenig Platz darunter über dem „?“). Fenster des Browsers sehr niedrig machen: Fenster bleibt im Bild, langer Text lässt sich im Fenster scrollen, ohne dass es schließt | ✅ |
+| F2-16 | Zeichnen nach F2 | Zeichenwerkzeuge (F1) funktionieren weiter; das „?“ oben rechts im Kursdiagramm stört nicht | ✅ |
+
+| Datum | Browser und Version | Prüfer | Ergebnis F2 |
+|---|---|---|---|
+| 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 17 Testfälle erfüllt (Erklärungen unten auf der Seite wurden zunächst abgeschnitten; behoben und mit F2-17 erneut geprüft) |
+
 ## Automatisch geprüft (zur Ergänzung, nicht Teil des manuellen Tests)
 
-- `Weboberflaeche.WirdVomServerAusgeliefert`: `/`, `/app.js`, `/zeichnen.js`, `/style.css` mit Status 200 und richtigem Inhaltstyp; `zeichnen.js` wird vor `app.js` eingebunden
+- `Weboberflaeche.WirdVomServerAusgeliefert`: `/`, `/app.js`, `/zeichnen.js`, `/erklaerungen.js`, `/style.css` mit Status 200 und richtigem Inhaltstyp; `zeichnen.js` und `erklaerungen.js` werden vor `app.js` eingebunden
+- `Weboberflaeche.ErklaerungenVollstaendig` (F2): jeder benutzte Schlüssel hat einen Text, jeder Text wird benutzt, jeder Platzhalter wird geliefert
 - `Weboberflaeche.KeineExternenAdressen`: keine Datei in `web/` enthält `http://`, `https://` oder `"//` (außer der SVG-Namensraum-Kennung)
 - Die Endpunkte, die die Seite benutzt, sind in E8/E9 getestet (Status, JSON, Fehlerfälle).
 

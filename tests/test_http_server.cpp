@@ -31,6 +31,10 @@
 #include <future>
 // std::mutex
 #include <mutex>
+// std::regex für die Textprüfung der Weboberfläche
+#include <regex>
+// std::set
+#include <set>
 // std::string
 #include <string>
 // std::thread
@@ -395,6 +399,12 @@ TEST(Weboberflaeche, WirdVomServerAusgeliefert) {
     ASSERT_TRUE(skript);
     EXPECT_EQ(skript->status, 200);
     EXPECT_NE(skript->get_header_value("Content-Type").find("javascript"), std::string::npos);
+    const auto erkl = c.Get("/erklaerungen.js");
+    ASSERT_TRUE(erkl);
+    EXPECT_EQ(erkl->status, 200);
+    EXPECT_NE(erkl->get_header_value("Content-Type").find("javascript"), std::string::npos);
+    // Erklärungen (F2) ebenfalls vor app.js eingebunden
+    EXPECT_LT(seite->body.find("src=\"erklaerungen.js\""), seite->body.find("src=\"app.js\""));
     const auto zeichnen = c.Get("/zeichnen.js");
     ASSERT_TRUE(zeichnen);
     EXPECT_EQ(zeichnen->status, 200);
@@ -440,6 +450,70 @@ TEST(Weboberflaeche, KeineExternenAdressen) {
         // Gezählt
         ++dateien;
     }
-    // index.html, app.js, zeichnen.js, style.css
-    EXPECT_GE(dateien, 4);
+    // index.html, app.js, zeichnen.js, erklaerungen.js, style.css
+    EXPECT_GE(dateien, 5);
+}
+
+// Erklärungen (F2) vollständig und widerspruchsfrei, als Textprüfung der drei Dateien (ohne Browser):
+//   1. Jeder Schlüssel, den index.html (data-hilfe="…") oder app.js ("…" als Schlüssel eines „?“) benutzt,
+//      hat einen Eintrag in ERKLAERUNGEN (sonst würde das „?“ nichts anzeigen).
+//   2. Jeder Eintrag in ERKLAERUNGEN wird auch benutzt (keine vergessenen Texte).
+//   3. Jeder Platzhalter {name} in den Texten wird von aktuelleWerte() in app.js geliefert.
+TEST(Weboberflaeche, ErklaerungenVollstaendig) {
+    // Datei komplett lesen
+    auto lies = [](const std::string& name) {
+        // Datei im Ordner web/
+        std::ifstream datei(std::string(WEB_DIR) + "/" + name, std::ios::binary);
+        std::stringstream puffer;
+        puffer << datei.rdbuf();
+        return puffer.str();
+    };
+    // Alle Treffer der ersten Gruppe eines regulären Ausdrucks in einem Text
+    auto treffer = [](const std::string& text, const std::string& muster) {
+        // Ergebnis als sortierte Menge
+        std::set<std::string> namen;
+        const std::regex re(muster);
+        // Alle Fundstellen durchgehen
+        for (auto it = std::sregex_iterator(text.begin(), text.end(), re); it != std::sregex_iterator(); ++it) {
+            // Erste Gruppe übernehmen
+            namen.insert((*it)[1].str());
+        }
+        return namen;
+    };
+    // Die drei Dateien
+    const std::string html = lies("index.html");
+    const std::string app = lies("app.js");
+    const std::string datei = lies("erklaerungen.js");
+    // Nur der Block des Objekts ERKLAERUNGEN (bis zur ersten Zeile "};"), nicht der Code des Fensters danach
+    const std::size_t blockAnfang = datei.find("const ERKLAERUNGEN = {");
+    ASSERT_NE(blockAnfang, std::string::npos);
+    const std::string erklaerungen = datei.substr(blockAnfang, datei.find("\n};", blockAnfang) - blockAnfang);
+    ASSERT_FALSE(erklaerungen.empty());
+
+    // Einträge: Zeilen "  schluessel: {" (genau zwei Leerzeichen eingerückt, siehe Kopf von erklaerungen.js)
+    const std::set<std::string> eintraege = treffer(erklaerungen, R"re((?:^|\n)  ([A-Za-z][A-Za-z0-9]*): \{)re");
+    // Benutzte Schlüssel: data-hilfe in index.html, Hilfe.knopf("…") und Kennzahlen-Zeilen in app.js
+    std::set<std::string> benutzt = treffer(html, R"re(data-hilfe="([A-Za-z0-9]+)")re");
+    for (const auto& k : treffer(app, R"re(Hilfe\.knopf\("([A-Za-z0-9]+)"\))re")) benutzt.insert(k);
+    for (const auto& k : treffer(app, R"re(paare\.push\(\[[^\n]*,\s*"([A-Za-z0-9]+)"\]\))re")) benutzt.insert(k);
+
+    // Plausibel: mindestens 20 Einträge und 20 benutzte Schlüssel
+    EXPECT_GE(eintraege.size(), 20u);
+    EXPECT_GE(benutzt.size(), 20u);
+    // 1. Jeder benutzte Schlüssel hat einen Eintrag
+    for (const auto& k : benutzt) EXPECT_TRUE(eintraege.count(k)) << "kein Eintrag in ERKLAERUNGEN für '" << k << "'";
+    // 2. Jeder Eintrag wird benutzt
+    for (const auto& k : eintraege) EXPECT_TRUE(benutzt.count(k)) << "Eintrag '" << k << "' wird nirgends benutzt";
+
+    // 3. Platzhalter: {name} ohne Leerzeichen (Code wie "{ passive: true }" oder "${…}" passt nicht)
+    const std::set<std::string> platzhalter = treffer(erklaerungen, R"re(\{([A-Za-z][A-Za-z0-9]*)\})re");
+    // Geliefert von aktuelleWerte(): Namen im Objekt "const w = { … };" und Zuweisungen "w.name ="
+    const std::size_t anfang = app.find("const w = {");
+    ASSERT_NE(anfang, std::string::npos);
+    const std::string objekt = app.substr(anfang, app.find("};", anfang) - anfang);
+    std::set<std::string> geliefert = treffer(objekt, R"re(\b([A-Za-z][A-Za-z0-9]*)\s*[:,])re");
+    for (const auto& k : treffer(app, R"re(\bw\.([A-Za-z][A-Za-z0-9]*)\s*=)re")) geliefert.insert(k);
+    // Mindestens die bekannten Platzhalter
+    EXPECT_GE(platzhalter.size(), 15u);
+    for (const auto& k : platzhalter) EXPECT_TRUE(geliefert.count(k)) << "Platzhalter {" << k << "} wird von aktuelleWerte() nicht geliefert";
 }

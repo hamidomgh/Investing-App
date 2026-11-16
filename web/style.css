@@ -218,3 +218,56 @@ th { font-size: .78rem; color: var(--leise); font-weight: 600; }
 .werkzeuge .magnet { display: flex; align-items: center; gap: 4px; font-size: .85rem; }
 /* Hinweis rechts daneben */
 .werkzeuge .klein { margin: 0 0 0 6px; }
+
+/* „?“ der Erklärungen (F2): kleiner runder Knopf neben dem Namen */
+.hilfe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0 2px;
+  border-radius: 50%;
+  border: 1px solid var(--linie);
+  background: var(--karte);
+  color: var(--leise);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+/* Hervorgehoben beim Überfahren und bei Tastatur-Fokus */
+.hilfe:hover, .hilfe:focus-visible, .hilfe[aria-expanded="true"] { border-color: var(--sma); color: var(--sma); }
+/* Das „?“ eines Diagramms oben rechts in dessen Ecke */
+.diagramm-hilfe { position: absolute; top: 4px; right: 6px; }
+/* In den Einstellungen bleibt das Eingabefeld rechtsbündig, das „?“ direkt beim Namen */
+.zeile .hilfe { margin-left: 0; }
+
+/* Erklärungsfenster (F2) */
+.erklaerung {
+  position: absolute;
+  z-index: 10;
+  max-width: min(340px, calc(100vw - 16px));
+  background: var(--karte);
+  color: var(--text);
+  border: 1px solid var(--linie);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+  font-size: .82rem;
+  line-height: 1.45;
+  /* Ist der Platz zu knapp, begrenzt erklaerungen.js die Höhe; der Rest lässt sich im Fenster scrollen */
+  overflow-y: auto;
+  /* Scrollen im Fenster soll nicht die Seite weiterscrollen (das würde das Fenster schließen) */
+  overscroll-behavior: contain;
+}
+/* Überschrift */
+.erklaerung strong { display: block; margin-bottom: 4px; }
+/* Absätze */
+.erklaerung p { margin: 4px 0; }
+/* Aktueller Wert hervorgehoben */
+.erklaerung .aktuell { font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Hinweis „keine Anlageberatung“ */
+.erklaerung .beratung { color: var(--leise); font-size: .75rem; font-style: italic; }

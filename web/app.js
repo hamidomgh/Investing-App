@@ -135,8 +135,10 @@ function zeigeHinweis() {
   const quelle = [zustand.kurse, zustand.indikatoren, zustand.ereignisse].find((d) => d && d.veraltet);
   // Hinweisbereich
   const box = el("hinweis");
-  // Text setzen oder ausblenden
-  box.textContent = quelle ? `Hinweis: Es werden ältere Daten angezeigt. ${quelle.hinweis || ""}` : "";
+  // Text mit „?“ (F2) setzen oder leeren
+  box.replaceChildren(...(quelle
+    ? [document.createTextNode(`Hinweis: Es werden ältere Daten angezeigt. ${quelle.hinweis || ""} `), Hilfe.knopf("veraltet")]
+    : []));
   // Sichtbar nur mit Hinweis
   box.hidden = !quelle;
 }
@@ -687,29 +689,32 @@ function zeigeKennzahlen() {
     // Erster und letzter Tag
     const erste = kerzen[0];
     const letzte = kerzen[kerzen.length - 1];
-    paare.push(["Zeitraum", `${kurzesDatum(erste.datum)} – ${kurzesDatum(letzte.datum)}`]);
-    paare.push(["Handelstage", String(kerzen.length)]);
-    paare.push(["Veränderung im Zeitraum", prozent.format(letzte.close / erste.close - 1)]);
+    paare.push(["Zeitraum", `${kurzesDatum(erste.datum)} – ${kurzesDatum(letzte.datum)}`, "zeitraum"]);
+    paare.push(["Handelstage", String(kerzen.length), "handelstage"]);
+    paare.push(["Veränderung im Zeitraum", prozent.format(letzte.close / erste.close - 1), "veraenderung"]);
   }
   // Aus den Indikatoren: Volatilität, Drawdown, Pivot-Punkte
   const ind = zustand.indikatoren;
   if (ind) {
     // Volatilität kann null sein (zu wenige Daten)
-    paare.push(["Volatilität (annualisiert)", ind.volatilitaet === null ? "nicht verfügbar" : prozent.format(ind.volatilitaet).replace("+", "")]);
-    paare.push(["Maximaler Drawdown", prozent.format(-ind.maxDrawdown)]);
-    paare.push(["Pivot P", zahl.format(ind.pivot.p)]);
-    paare.push(["R1 / R2", `${zahl.format(ind.pivot.r1)} / ${zahl.format(ind.pivot.r2)}`]);
-    paare.push(["S1 / S2", `${zahl.format(ind.pivot.s1)} / ${zahl.format(ind.pivot.s2)}`]);
-    paare.push(["Niveaus (S/R)", String(ind.niveaus.length)]);
+    paare.push(["Volatilität (annualisiert)", ind.volatilitaet === null ? "nicht verfügbar" : prozent.format(ind.volatilitaet).replace("+", ""), "volatilitaet"]);
+    paare.push(["Maximaler Drawdown", prozent.format(-ind.maxDrawdown), "drawdown"]);
+    paare.push(["Pivot P", zahl.format(ind.pivot.p), "pivot"]);
+    paare.push(["R1 / R2", `${zahl.format(ind.pivot.r1)} / ${zahl.format(ind.pivot.r2)}`, "pivot"]);
+    paare.push(["S1 / S2", `${zahl.format(ind.pivot.s1)} / ${zahl.format(ind.pivot.s2)}`, "pivot"]);
+    paare.push(["Niveaus (S/R)", String(ind.niveaus.length), "niveaus"]);
   }
+  // Währung aus der ersten vorhandenen Antwort (F2: mit Erklärung, z. B. GBX = Pence)
+  const kopf = zustand.kurse || zustand.indikatoren || zustand.ereignisse;
+  if (kopf) paare.push(["Währung", kopf.waehrung, "waehrung"]);
   // Liste leeren und neu füllen
   const dl = el("kennzahlen");
   dl.replaceChildren();
   // Jedes Paar als Begriff und Beschreibung
-  for (const [name, wert] of paare) {
-    // Name
+  for (const [name, wert, hilfe] of paare) {
+    // Name mit „?“ (F2)
     const dt = document.createElement("dt");
-    dt.textContent = name;
+    dt.append(`${name} `, Hilfe.knopf(hilfe));
     // Wert
     const dd = document.createElement("dd");
     dd.textContent = wert;
@@ -767,12 +772,89 @@ function zeigeEreignisse() {
   }
 }
 
+// ------------------------------------------------------------------ Werte für die Erklärungen (F2)
+
+// Letzter vorhandener Wert einer Reihe (null überspringen)
+function letzterWert(reihe) {
+  // Von hinten suchen
+  for (let i = reihe.length - 1; i >= 0; i--) {
+    // Erster Wert, der nicht null ist
+    if (reihe[i] !== null && reihe[i] !== undefined) return reihe[i];
+  }
+  // Keiner vorhanden
+  return undefined;
+}
+
+// Liefert alle Werte, die in den Texten von erklaerungen.js als {name} vorkommen. Fehlt ein Wert (z. B. weil
+// die Indikatoren nicht geladen werden konnten), bleibt er undefined; die Erklärung lässt den Satz dann weg.
+function aktuelleWerte() {
+  // Indikatoren, Kerzen, Ereignisse
+  const ind = zustand.indikatoren;
+  const kerzen = zustand.kurse ? zustand.kurse.kerzen : [];
+  const ereignisse = zustand.ereignisse;
+  // Perioden: wie vom Server verwendet, sonst aus den Eingabefeldern
+  const zahlAus = (id) => { const v = Number(el(id).value); return Number.isInteger(v) && v > 0 ? v : undefined; };
+  const teile = (id) => el(id).value.split(",").map((t) => Number(t.trim()));
+  const [mS, mL, mSig] = ind ? ind.parameter.macd : teile("macd");
+  const [bN, bK] = ind ? ind.parameter.bollinger : teile("bollinger");
+  const sma = ind ? ind.parameter.sma : zahlAus("sma");
+  const ema = ind ? ind.parameter.ema : zahlAus("ema");
+  const rsi = ind ? ind.parameter.rsi : zahlAus("rsi");
+  // Hilfe: nur gültige ganze Zahlen übernehmen
+  const ganz = (v) => (Number.isInteger(v) && v > 0 ? v : undefined);
+  // Werte sammeln
+  const w = {
+    sma, ema, rsi,
+    smaMinus1: sma ? sma - 1 : undefined,
+    emaAlpha: ema ? (2 / (ema + 1)).toLocaleString("de-DE", { maximumFractionDigits: 4 }) : undefined,
+    macdS: ganz(mS), macdL: ganz(mL), macdSig: ganz(mSig),
+    macdLS: ganz(mL) && ganz(mSig) ? mL + mSig - 1 : undefined,
+    bbN: ganz(bN), bbK: Number.isFinite(bK) ? bK.toLocaleString("de-DE") : undefined,
+    fenster: ind ? ind.parameter.fenster : 5,
+    toleranz: `${((ind ? ind.parameter.toleranz : 0.02) * 100).toLocaleString("de-DE", { maximumFractionDigits: 2 })} %`,
+  };
+  // Aus den Indikatoren
+  if (ind) {
+    w.smaLetzter = letzterWert(ind.sma) !== undefined ? zahl.format(letzterWert(ind.sma)) : undefined;
+    w.emaLetzter = letzterWert(ind.ema) !== undefined ? zahl.format(letzterWert(ind.ema)) : undefined;
+    w.rsiLetzter = letzterWert(ind.rsi) !== undefined ? zahl.format(letzterWert(ind.rsi)) : undefined;
+    w.anzahlNiveaus = ind.niveaus.length;
+    w.volatilitaet = ind.volatilitaet === null ? undefined : prozent.format(ind.volatilitaet).replace("+", "");
+    w.maxDrawdown = prozent.format(-ind.maxDrawdown);
+    w.pivotP = zahl.format(ind.pivot.p);
+    w.pivotR1 = zahl.format(ind.pivot.r1);
+    w.pivotR2 = zahl.format(ind.pivot.r2);
+    w.pivotS1 = zahl.format(ind.pivot.s1);
+    w.pivotS2 = zahl.format(ind.pivot.s2);
+  }
+  // Aus den Kerzen
+  if (kerzen.length > 0) {
+    const erste = kerzen[0];
+    const letzte = kerzen[kerzen.length - 1];
+    w.handelstage = kerzen.length;
+    w.zeitraum = `${kurzesDatum(erste.datum)} – ${kurzesDatum(letzte.datum)}`;
+    w.ersterClose = zahl.format(erste.close);
+    w.letzterClose = zahl.format(letzte.close);
+    w.letzterHigh = zahl.format(letzte.high);
+    w.letzterLow = zahl.format(letzte.low);
+    w.veraenderung = prozent.format(letzte.close / erste.close - 1);
+  }
+  // Aus der Ereignisstudie und dem Kopf
+  if (ereignisse) w.anzahlEreignisse = ereignisse.ereignisse.length;
+  const kopf = zustand.kurse || zustand.indikatoren || zustand.ereignisse;
+  if (kopf) w.waehrung = kopf.waehrung === "GBX" ? "GBX (Pence)" : kopf.waehrung;
+  // Fertig
+  return w;
+}
+
 // ------------------------------------------------------------------ Start
 
 // Wird beim Laden der Seite ausgeführt
 async function start() {
   // Werkzeugleiste und Tasten der Zeichenwerkzeuge verbinden (F1)
   Zeichnen.init();
+  // Erklärungsfenster der „?“ vorbereiten; es holt sich die aktuellen Werte über aktuelleWerte (F2)
+  Hilfe.init(aktuelleWerte);
   // Liste der Wertpapiere laden
   try {
     // Anfrage

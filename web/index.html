@@ -43,21 +43,21 @@
       <!-- Überschrift -->
       <h2>Indikatoren</h2>
       <!-- Jede Zeile: Ein/Aus und Periode. Die Standardwerte entsprechen denen der Schnittstelle (E8). -->
-      <label class="zeile"><input id="zeigeSma" type="checkbox" checked> SMA
+      <label class="zeile"><input id="zeigeSma" type="checkbox" checked> SMA <button type="button" class="hilfe" data-hilfe="sma">?</button>
         <input id="sma" class="zahl" type="number" min="1" value="20" title="Periode"></label>
-      <label class="zeile"><input id="zeigeEma" type="checkbox" checked> EMA
+      <label class="zeile"><input id="zeigeEma" type="checkbox" checked> EMA <button type="button" class="hilfe" data-hilfe="ema">?</button>
         <input id="ema" class="zahl" type="number" min="1" value="20" title="Periode"></label>
-      <label class="zeile"><input id="zeigeBollinger" type="checkbox"> Bollinger
+      <label class="zeile"><input id="zeigeBollinger" type="checkbox"> Bollinger <button type="button" class="hilfe" data-hilfe="bollinger">?</button>
         <input id="bollinger" class="text" type="text" value="20,2" title="Periode,k"></label>
-      <label class="zeile"><input id="zeigeNiveaus" type="checkbox" checked> Support/Resistance</label>
-      <label class="zeile"><input id="zeigePivot" type="checkbox"> Pivot-Punkte</label>
-      <label class="zeile"><input id="zeigeEreignisse" type="checkbox" checked> Zinsentscheidungen</label>
-      <label class="zeile"><input id="zeigeRsi" type="checkbox" checked> RSI
+      <label class="zeile"><input id="zeigeNiveaus" type="checkbox" checked> Support/Resistance <button type="button" class="hilfe" data-hilfe="niveaus">?</button></label>
+      <label class="zeile"><input id="zeigePivot" type="checkbox"> Pivot-Punkte <button type="button" class="hilfe" data-hilfe="pivot">?</button></label>
+      <label class="zeile"><input id="zeigeEreignisse" type="checkbox" checked> Zinsentscheidungen <button type="button" class="hilfe" data-hilfe="zinsmarkierung">?</button></label>
+      <label class="zeile"><input id="zeigeRsi" type="checkbox" checked> RSI <button type="button" class="hilfe" data-hilfe="rsi">?</button>
         <input id="rsi" class="zahl" type="number" min="1" value="14" title="Periode"></label>
-      <label class="zeile"><input id="zeigeMacd" type="checkbox" checked> MACD
+      <label class="zeile"><input id="zeigeMacd" type="checkbox" checked> MACD <button type="button" class="hilfe" data-hilfe="macd">?</button>
         <input id="macd" class="text" type="text" value="12,26,9" title="schnell,langsam,signal"></label>
       <!-- Hinweis, wann die Einstellungen wirken -->
-      <p class="klein">Perioden wirken nach „Anzeigen“, Ein/Aus sofort.</p>
+      <p class="klein">Perioden wirken nach „Anzeigen“, Ein/Aus sofort. „?“: Erklärung beim Überfahren mit der Maus.</p>
     </aside>
 
     <!-- Diagramme -->
@@ -79,17 +79,23 @@
         <button type="button" id="zeichnungLoeschen" title="Entf">Löschen</button>
         <button type="button" id="rueckgaengig" title="Strg+Z">Rückgängig</button>
         <button type="button" id="alleLoeschen">Alle löschen</button>
+        <!-- Erklärung aller Werkzeuge (F2) -->
+        <button type="button" class="hilfe" data-hilfe="zeichenwerkzeuge">?</button>
         <!-- Anleitung zum gewählten Werkzeug oder Hinweis zum Speicher -->
         <span id="zeichenHinweis" class="klein"></span>
       </div>
       <!-- Kursdiagramm; das SVG zeichnet app.js -->
       <div class="diagramm haupt"><svg id="kurschart" role="img" aria-label="Kursdiagramm"></svg>
+        <!-- Erklärung des Diagramms (F2), oben rechts -->
+        <span class="diagramm-hilfe"><button type="button" class="hilfe" data-hilfe="kursdiagramm">?</button></span>
         <!-- Infokasten beim Überfahren mit der Maus -->
         <div id="info" class="info" hidden></div></div>
       <!-- RSI-Diagramm -->
-      <div id="rsiBox" class="diagramm klein-diagramm"><svg id="rsichart" role="img" aria-label="RSI"></svg></div>
+      <div id="rsiBox" class="diagramm klein-diagramm"><svg id="rsichart" role="img" aria-label="RSI"></svg>
+        <span class="diagramm-hilfe"><button type="button" class="hilfe" data-hilfe="rsi">?</button></span></div>
       <!-- MACD-Diagramm -->
-      <div id="macdBox" class="diagramm klein-diagramm"><svg id="macdchart" role="img" aria-label="MACD"></svg></div>
+      <div id="macdBox" class="diagramm klein-diagramm"><svg id="macdchart" role="img" aria-label="MACD"></svg>
+        <span class="diagramm-hilfe"><button type="button" class="hilfe" data-hilfe="macd">?</button></span></div>
     </section>
 
     <!-- Kennzahlen (Volatilität, Drawdown, Pivot-Punkte) -->
@@ -103,15 +109,17 @@
     <!-- Ereignisstudie (E6) -->
     <section class="ereignisse">
       <!-- Überschrift -->
-      <h2>Ereignisstudie: Zinsentscheidungen</h2>
+      <h2>Ereignisstudie: Zinsentscheidungen <button type="button" class="hilfe" data-hilfe="ereignisstudie">?</button></h2>
       <!-- Erklärung des Datums (E6: Tag der Wirksamkeit, nicht der Sitzung) -->
       <p id="ereignisHinweis" class="klein"></p>
       <!-- Tabelle; in einem Rahmen, der auf schmalen Bildschirmen seitlich scrollt -->
       <div class="tabellenrahmen">
         <table>
           <!-- Spaltenköpfe -->
-          <thead><tr><th>Zentralbank</th><th>Wirksam ab</th><th>Leitzins</th><th>Reaktionstag</th>
-            <th>Kurs vorher</th><th>Kurs nachher</th><th>Veränderung</th></tr></thead>
+          <thead><tr><th>Zentralbank <button type="button" class="hilfe" data-hilfe="zentralbank">?</button></th><th>Wirksam ab <button type="button" class="hilfe" data-hilfe="wirksamAb">?</button></th>
+            <th>Leitzins <button type="button" class="hilfe" data-hilfe="leitzins">?</button></th><th>Reaktionstag <button type="button" class="hilfe" data-hilfe="reaktionstag">?</button></th>
+            <th>Kurs vorher <button type="button" class="hilfe" data-hilfe="kursVorher">?</button></th><th>Kurs nachher <button type="button" class="hilfe" data-hilfe="kursNachher">?</button></th>
+            <th>Veränderung <button type="button" class="hilfe" data-hilfe="veraenderungEreignis">?</button></th></tr></thead>
           <!-- Zeilen füllt app.js -->
           <tbody id="ereignisTabelle"></tbody>
         </table>
@@ -122,6 +130,8 @@
   <!-- Programmlogik der Seite; am Ende, damit alle Elemente oben schon existieren.
        zeichnen.js zuerst, weil app.js das Objekt "Zeichnen" daraus benutzt (F1). -->
   <script src="zeichnen.js"></script>
+  <!-- Erklärungen zu allen Zahlen (F2); ebenfalls vor app.js, das Hilfe benutzt -->
+  <script src="erklaerungen.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

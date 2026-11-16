@@ -17,7 +17,8 @@ Erklärungen für alle folgenden Stellen (Stand der Weboberfläche nach E10):
 | Kursdiagramm | Kerze (Open, High, Low, Close; grün/rot), Beschriftung „S …/R … (n×)“ der Niveaus, Markierung der Zinsentscheidung |
 | Unterdiagramme | RSI (Linien 30/50/70), MACD (Linie, Signal, Histogramm) |
 | Ereignisstudie | Zentralbank, Wirksam ab, Leitzins, Reaktionstag, Kurs vorher, Kurs nachher, Veränderung |
-| Hinweise | „veraltete Daten“ (Cache, E7), Währung GBX (Pence) |
+| Hinweise | „veraltete Daten“ (Cache, E7), Währung (neue Kennzahl „Währung“, erklärt auch GBX = Pence) |
+| Zeichenwerkzeuge (F1) | ein „?“ an der Werkzeugleiste: alle Werkzeuge, Magnet, Fibonacci-Stufen |
 
 **Gehört nicht dazu:** Anlageempfehlungen, Kauf-/Verkaufssignale, Erklärungen in anderen Sprachen.
 
@@ -64,6 +65,8 @@ Die Texte müssen genau zur Implementierung passen (Quelle: `docs/E3_…` bis `d
 - **Barrierefreiheit:** `aria-label="Erklärung zu RSI"`, `aria-expanded`, Fokus bleibt bedienbar.
 - **Platz:** Das Fenster bleibt im sichtbaren Bereich (auch am rechten Rand und auf schmalen Bildschirmen).
 - **Eine Quelle für alle Texte:** ein Objekt `ERKLAERUNGEN` in einer eigenen Datei `web/erklaerungen.js`.
+  Dort liegt auch die Logik des Erklärungsfensters (Objekt `Hilfe`, wie `Zeichnen` in F1); `app.js` liefert nur die
+  aktuellen Werte und erzeugt die „?“ bei dynamisch erzeugten Zeilen (Kennzahlen, Hinweis).
   Einträge können Platzhalter für aktuelle Werte enthalten (z. B. `{sma}` für die Periode).
 - **Sicherheit:** Texte werden mit `textContent` eingefügt (wie in E10), nie mit `innerHTML`.
 
@@ -71,8 +74,8 @@ Die Texte müssen genau zur Implementierung passen (Quelle: `docs/E3_…` bis `d
 
 | Datei | Änderung |
 |---|---|
-| `web/erklaerungen.js` | **neu:** alle Texte |
-| `web/app.js` | „?“-Knöpfe erzeugen, Popover öffnen/schließen, Platzhalter füllen |
+| `web/erklaerungen.js` | **neu:** alle Texte und das Erklärungsfenster (Objekt `Hilfe`) |
+| `web/app.js` | aktuelle Werte für die Platzhalter liefern; „?“ in Kennzahlen und Hinweis erzeugen; Kennzahl „Währung“ |
 | `web/index.html` | „?“ in den Einstellungen und Tabellenköpfen; `<script src="erklaerungen.js">` |
 | `web/style.css` | Knopf und Popover, helles und dunkles Schema |
 | `docs/testprotokoll.md` | neue Testfälle (Abschnitt 7) |
@@ -84,10 +87,11 @@ Die Texte müssen genau zur Implementierung passen (Quelle: `docs/E3_…` bis `d
 | Nr. | Frage | Empfehlung |
 |---|---|---|
 | 1 | Öffnen per Klick oder beim Überfahren? | **Entschieden (2026-11-16): beim Überfahren mit der Maus**; zusätzlich Tab-Fokus und Antippen als Ersatz ohne Maus |
-| 2 | Aktuellen Wert in die Erklärung einbauen? | Ja, wo es sinnvoll ist |
-| 3 | Ein „?“ pro Diagramm oder pro Linie? | Pro Diagramm (sonst wird das Diagramm unübersichtlich) |
-| 4 | Sprache der Texte | Deutsch, wie die Oberfläche |
-| 5 | Hinweis „keine Anlageberatung“? | Ja, einmal am Ende jeder Erklärung zu Indikatoren mit üblicher Deutung |
+| 2 | Aktuellen Wert in die Erklärung einbauen? | **Entschieden (2026-11-16):** ja, wo es sinnvoll ist |
+| 3 | Ein „?“ pro Diagramm oder pro Linie? | **Entschieden (2026-11-16):** pro Diagramm |
+| 4 | Sprache der Texte | **Entschieden (2026-11-16):** Deutsch |
+| 5 | Hinweis „keine Anlageberatung“? | **Entschieden (2026-11-16):** ja, unter jeder Erklärung mit üblicher Deutung |
+| 6 | Auch die Zeichenwerkzeuge aus F1 erklären? | **Entschieden (2026-11-16):** ja, ein „?“ an der Werkzeugleiste |
 
 ## 7. Prüfung
 

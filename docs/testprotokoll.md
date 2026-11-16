@@ -22,7 +22,8 @@ Deshalb läuft der Server für den Browsertest in einem eigenen, zweiten Contain
    und `Im Browser öffnen: http://localhost:8080/`. Beenden mit Strg+C in diesem Terminal.
 3. Im Browser **http://localhost:8080/** öffnen (nicht `0.0.0.0`: das ist keine Adresse, die ein Browser öffnen kann).
 
-Vorhandene Offline-Daten: Kurse nur für **IBM** (`daten/IBM.json`, 2026-06-25 bis 2026-11-13), Zinsen für Fed und EZB.
+Offline-Daten bei der Durchführung am 2026-11-16: Kurse nur für **IBM** (2026-06-25 bis 2026-11-13), Zinsen für Fed und EZB.
+Seit dem 2026-11-16 liegen Kurse für alle 6 Wertpapiere in `daten/alphavantage/` und für IBM/AAPL in `daten/twelvedata/` (F3).
 
 ## Testfälle
 
@@ -103,6 +104,32 @@ Vorbereitung wie oben, Wertpapier IBM, kein Zeitraum, Standardperioden.
 | Datum | Browser und Version | Prüfer | Ergebnis F2 |
 |---|---|---|---|
 | 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 17 Testfälle erfüllt (Erklärungen unten auf der Seite wurden zunächst abgeschnitten; behoben und mit F2-17 erneut geprüft) |
+
+## F3 – Zweiter Anbieter Twelve Data, zwei Server nebeneinander (Feature, siehe `Features/F3_Zweiter_Anbieter.md`)
+
+Vorbereitung: zwei WSL-Terminals außerhalb des Containers, im Projektordner, Programm gebaut.
+
+    # Terminal 1: Alpha Vantage, alle Wertpapiere
+    podman run --rm -it -p 8080:8080 -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build/projekt --quelle alphavantage --port 8080 --host 0.0.0.0
+    # Terminal 2: Twelve Data, nur USA
+    podman run --rm -it -p 8081:8081 -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build/projekt --quelle twelvedata --port 8081 --host 0.0.0.0
+
+| Nr. | Schritt | Erwartetes Ergebnis | Ergebnis |
+|---|---|---|---|
+| F3-1 | Startmeldungen beider Terminals | 1: „MarketLens: 6 Wertpapiere (Alpha Vantage), Kursdaten aus 'daten/alphavantage/' …“; 2: „MarketLens: 2 Wertpapiere (Twelve Data), Kursdaten aus 'daten/twelvedata/' …“; beide ohne Warnung zu den Zinsdaten | ✅ |
+| F3-2 | Tab 1 `http://localhost:8080/`, Tab 2 `http://localhost:8081/` | Kopfzeile „Kurse: Alpha Vantage“ bzw. „Kurse: Twelve Data“; Titel der Browser-Tabs „MarketLens – Alpha Vantage“ bzw. „MarketLens – Twelve Data“ | ✅ |
+| F3-3 | Auswahlliste | Tab 1: 6 Wertpapiere; Tab 2: nur IBM und AAPL | ✅ |
+| F3-4 | IBM in beiden Tabs | Titel 247,14 USD (Tab 1) bzw. 247,13 USD (Tab 2); Kerzen, SMA, RSI und Support/Resistance sehen gleich aus (Abweichung nur durch Rundung) | ✅ |
+| F3-5 | Ereignisstudie IBM in beiden Tabs | jeweils das Fed-Ereignis 17.09.26 → 18.09.26, 237,75 → 229,55, −3,45 % (an diesen beiden Tagen sind die Schlusskurse bei beiden Anbietern gleich) | ✅ |
+| F3-6 | „?“ neben „Kurse: …“ | Erklärung des Anbieters mit „Aktuell: Alpha Vantage“ bzw. „Aktuell: Twelve Data“ | ✅ |
+| F3-7 | Zeichnungen getrennt | In Tab 1 bei IBM eine Trendlinie zeichnen → in Tab 2 bei IBM nicht vorhanden (und umgekehrt) | ✅ |
+| F3-8 | Unabhängig | Terminal 2 mit Strg+C beenden („MarketLens beendet.“) → Tab 1 funktioniert weiter (Anzeigen klicken); Tab 2 zeigt „Keine Verbindung zum Server“ | ✅ |
+| F3-9 | Port belegt | Während Terminal 2 läuft, in einem dritten WSL-Terminal denselben `podman run … -p 8081:8081 …`-Befehl starten → podman meldet, dass Port 8081 schon belegt ist („address already in use“), der zweite Twelve-Data-Server startet nicht. (Die eigene Prüfung des Programms auf belegte Ports ist in E9 automatisch getestet.) | ✅ |
+| F3-10 | Unbekannter Anbieter | In der Shell des Entwicklungs-Containers (`./dev.sh`): `./build/projekt --quelle finnhub` → „Fehler: unbekannter Anbieter: finnhub (erlaubt: alphavantage, twelvedata)“ | ✅ |
+
+| Datum | Browser und Version | Prüfer | Ergebnis F3 |
+|---|---|---|---|
+| 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 10 Testfälle erfüllt |
 
 ## Automatisch geprüft (zur Ergänzung, nicht Teil des manuellen Tests)
 

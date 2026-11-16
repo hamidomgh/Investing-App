@@ -18,8 +18,9 @@ const prozent = new Intl.NumberFormat("de-DE", {
   style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero",
 });
 
-// Zuletzt geladene Daten; null, wenn der jeweilige Abruf fehlgeschlagen ist
-const zustand = { kurse: null, indikatoren: null, ereignisse: null };
+// Zuletzt geladene Daten; null, wenn der jeweilige Abruf fehlgeschlagen ist.
+// "anbieter": Name des Kursdaten-Anbieters dieses Servers (F3), aus /api/wertpapiere
+const zustand = { kurse: null, indikatoren: null, ereignisse: null, anbieter: null };
 // Nummer des letzten Ladevorgangs: Antworten eines älteren Ladevorgangs werden verworfen
 let ladeNummer = 0;
 
@@ -843,6 +844,8 @@ function aktuelleWerte() {
   if (ereignisse) w.anzahlEreignisse = ereignisse.ereignisse.length;
   const kopf = zustand.kurse || zustand.indikatoren || zustand.ereignisse;
   if (kopf) w.waehrung = kopf.waehrung === "GBX" ? "GBX (Pence)" : kopf.waehrung;
+  // Anbieter dieses Servers (F3)
+  if (zustand.anbieter) w.anbieter = zustand.anbieter;
   // Fertig
   return w;
 }
@@ -859,6 +862,10 @@ async function start() {
   try {
     // Anfrage
     const daten = await holeJson("/api/wertpapiere");
+    // Anbieter dieses Servers anzeigen (F3); auch im Titel des Browser-Tabs, damit man zwei Tabs unterscheiden kann
+    zustand.anbieter = daten.anbieter || null;
+    el("anbieter").textContent = zustand.anbieter ? `Kurse: ${zustand.anbieter}` : "";
+    if (zustand.anbieter) document.title = `MarketLens – ${zustand.anbieter}`;
     // Auswahlliste
     const auswahl = el("symbol");
     // Eine Option pro Wertpapier

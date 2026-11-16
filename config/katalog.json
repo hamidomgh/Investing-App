@@ -1,11 +1,17 @@
 {
     "wertpapiere": [
-        { "symbol": "IBM",          "name": "International Business Machines", "land": "USA",            "waehrung": "USD" },
-        { "symbol": "AAPL",         "name": "Apple Inc.",                      "land": "USA",            "waehrung": "USD" },
-        { "symbol": "MBG.DEX",      "name": "Mercedes-Benz Group AG",          "land": "Deutschland",    "waehrung": "EUR" },
-        { "symbol": "TSCO.LON",     "name": "Tesco PLC",                       "land": "Großbritannien", "waehrung": "GBX" },
-        { "symbol": "SHOP.TRT",     "name": "Shopify Inc.",                    "land": "Kanada",         "waehrung": "CAD" },
-        { "symbol": "RELIANCE.BSE", "name": "Reliance Industries Ltd.",        "land": "Indien",         "waehrung": "INR" }
+        { "symbol": "IBM",          "name": "International Business Machines", "land": "USA",            "waehrung": "USD",
+          "symbole": { "alphavantage": "IBM", "twelvedata": "IBM" } },
+        { "symbol": "AAPL",         "name": "Apple Inc.",                      "land": "USA",            "waehrung": "USD",
+          "symbole": { "alphavantage": "AAPL", "twelvedata": "AAPL" } },
+        { "symbol": "MBG.DEX",      "name": "Mercedes-Benz Group AG",          "land": "Deutschland",    "waehrung": "EUR",
+          "symbole": { "alphavantage": "MBG.DEX" } },
+        { "symbol": "TSCO.LON",     "name": "Tesco PLC",                       "land": "Großbritannien", "waehrung": "GBX",
+          "symbole": { "alphavantage": "TSCO.LON" } },
+        { "symbol": "SHOP.TRT",     "name": "Shopify Inc.",                    "land": "Kanada",         "waehrung": "CAD",
+          "symbole": { "alphavantage": "SHOP.TRT" } },
+        { "symbol": "RELIANCE.BSE", "name": "Reliance Industries Ltd.",        "land": "Indien",         "waehrung": "INR",
+          "symbole": { "alphavantage": "RELIANCE.BSE" } }
     ],
     "zentralbanken": [
         { "name": "Fed", "laender": ["USA"], "waehrung": "USD", "fredSerie": "DFEDTARU" },

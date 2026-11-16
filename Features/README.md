@@ -11,7 +11,7 @@ Eigenschaft (E1–E10) und keinen bestehenden Test verschlechtern.
 |---|---|---|---|
 | F1 | [Zeichenwerkzeuge im Kursdiagramm](F1_Zeichenwerkzeuge.md) | nur Weboberfläche (`web/`) | **umgesetzt** (2026-11-16), Erklärung `docs/F1_Zeichenwerkzeuge.md`; Browsertest F1-1…F1-16 am 2026-11-16 bestanden |
 | F2 | [Erklärungen („?“) zu allen Zahlen](F2_Erklaerungen.md) | nur Weboberfläche (`web/`) | **umgesetzt** (2026-11-16), Erklärung `docs/F2_Erklaerungen.md`; Browsertest F2-1…F2-17 am 2026-11-16 bestanden |
-| F3 | [Zweiter Anbieter Twelve Data, zwei Server nebeneinander](F3_Zweiter_Anbieter.md) | Server und Weboberfläche | beschrieben (Twelve Data, Port 8081, nur USA); Finnhub verworfen; Reihenfolge und Zweig offen |
+| F3 | [Zweiter Anbieter Twelve Data, zwei Server nebeneinander](F3_Zweiter_Anbieter.md) | Server und Weboberfläche | **offline umgesetzt** (2026-11-16, Zweig `zweiter-anbieter`), Erklärung `docs/F3_ZweiterAnbieter.md`; Browsertest F3-1…F3-10 am 2026-11-16 bestanden; Live-Client folgt |
 
 ## Vorlage für neue Features
 

@@ -40,6 +40,7 @@ add_library(projekt_lib
     src/http_client.cpp
     src/umgebung.cpp
     src/alphavantage_quelle.cpp
+    src/twelvedata_quelle.cpp
     src/katalog.cpp
     src/kursabruf.cpp
     src/http_cache.cpp
@@ -99,6 +100,7 @@ add_executable(tests
     tests/test_nebenlaeufigkeit.cpp
     tests/test_http_server.cpp
     tests/test_fred.cpp
+    tests/test_twelvedata.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib projekt_server GTest::gtest_main)

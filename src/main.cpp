@@ -2,6 +2,9 @@
 #include "anfragebehandlung.hpp"
 // Offline-Kursquelle: liest gespeicherte Antworten aus einem Ordner
 #include "dateiquelle.hpp"
+// Parser der beiden Anbieter für die Offline-Dateien (F3)
+#include "alphavantage_quelle.hpp"
+#include "twelvedata_quelle.hpp"
 // Offline-Zinsquelle und Laden aller Zentralbanken (E6)
 #include "datei_zinsquelle.hpp"
 #include "zinsabruf.hpp"
@@ -46,8 +49,10 @@ struct Einstellungen {
     int port = 8080;
     // Katalog der Wertpapiere
     std::string katalog = "config/katalog.json";
-    // Ordner mit gespeicherten Alpha-Vantage-Antworten (<SYMBOL>.json)
-    std::string daten = "daten";
+    // Kursdaten-Anbieter (F3): "alphavantage" (Standard) oder "twelvedata"
+    std::string quelle = "alphavantage";
+    // Ordner mit gespeicherten Antworten des Anbieters (<SYMBOL>.json); leer = daten/<quelle>
+    std::string daten;
     // Ordner mit gespeicherten FRED-Antworten (<SERIE>.json) für die Zinsentscheidungen (E6)
     std::string zinsen = "daten/zinsen";
     // Ordner der Weboberfläche (E10)
@@ -63,7 +68,8 @@ void hilfe() {
                  "  --host ADRESSE   Adresse (Standard 127.0.0.1; im Container 0.0.0.0)\n"
                  "  --port PORT      Port (Standard 8080)\n"
                  "  --katalog DATEI  Katalog der Wertpapiere (Standard config/katalog.json)\n"
-                 "  --daten ORDNER   gespeicherte Kursdaten <SYMBOL>.json (Standard daten)\n"
+                 "  --quelle NAME    Kursdaten-Anbieter: alphavantage (Standard) oder twelvedata\n"
+                 "  --daten ORDNER   gespeicherte Kursdaten <SYMBOL>.json (Standard daten/<NAME des Anbieters>)\n"
                  "  --zinsen ORDNER  gespeicherte FRED-Zinsdaten <SERIE>.json (Standard daten/zinsen)\n"
                  "  --web ORDNER     Dateien der Weboberfläche (Standard web)\n"
                  "  --threads N      Arbeits-Threads (Standard: Anzahl der Prozessorkerne)\n"
@@ -125,6 +131,16 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
         } else if (a == "--zinsen") {
             // Ordner der Zinsdaten
             e.zinsen = wert;
+        } else if (a == "--quelle") {
+            // Nur die beiden bekannten Anbieter
+            if (wert != "alphavantage" && wert != TwelveDataQuelle::anbieterId) {
+                // Unbekannter Anbieter
+                std::cerr << "Fehler: unbekannter Anbieter: " << wert << " (erlaubt: alphavantage, twelvedata)\n";
+                rueckgabe = 2;
+                return false;
+            }
+            // Anbieter übernehmen
+            e.quelle = wert;
         } else if (a == "--daten") {
             // Datenordner
             e.daten = wert;
@@ -158,6 +174,12 @@ int main(int argc, char* argv[]) {
         // Hilfe gezeigt oder Fehler
         return rueckgabe;
     }
+    // Ohne --daten: eigener Ordner je Anbieter, damit sich die Daten nicht stören (F3)
+    if (e.daten.empty()) e.daten = "daten/" + e.quelle;
+    // Twelve Data oder Alpha Vantage? (F3)
+    const bool twelve = e.quelle == TwelveDataQuelle::anbieterId;
+    // Name für Anzeige und Startmeldung
+    const std::string anbieterName = twelve ? TwelveDataQuelle::anzeigeName : "Alpha Vantage";
 
     // Katalog lesen; ein unbrauchbarer Katalog beendet das Programm
     try {
@@ -189,11 +211,15 @@ int main(int argc, char* argv[]) {
         // Kette der Anfragebearbeitung (E9):
         //   Server -> Ergebnis-Cache -> Anfragebehandlung -> SynchronisierteQuelle -> DateiQuelle
         // Offline-Kursquelle (der Live-Zugriff über HTTPS kommt später mit einer CMake-Option)
-        DateiQuelle dateiQuelle(e.daten);
+        // Format der Dateien je nach Anbieter (F3)
+        DateiQuelle dateiQuelle(e.daten, twelve ? DateiQuelle::Parser(TwelveDataQuelle::parse)
+                                                : DateiQuelle::Parser(AlphaVantageQuelle::parse));
         // Nur ein Thread gleichzeitig lädt Daten; Berechnungen laufen parallel
         SynchronisierteQuelle quelle(dateiQuelle);
-        // Logik der Schnittstelle mit Katalog, Kursquelle und Zinsentscheidungen
-        Anfragebehandlung api(katalog.wertpapiere(), quelle, zinsen.entscheidungen);
+        // Nur die Wertpapiere, die dieser Anbieter liefert (F3: bei Twelve Data nur die US-Wertpapiere)
+        const std::vector<Wertpapier> wertpapiere = katalog.fuerAnbieter(e.quelle);
+        // Logik der Schnittstelle mit Katalog, Kursquelle, Zinsentscheidungen und Name des Anbieters
+        Anfragebehandlung api(wertpapiere, quelle, zinsen.entscheidungen, anbieterName);
         // Ergebnisse 5 Minuten aufbewahren, höchstens 1000 verschiedene Anfragen
         SystemUhr uhr;
         ErgebnisCache cache(uhr, std::chrono::minutes{5}, 1000);
@@ -238,7 +264,7 @@ int main(int argc, char* argv[]) {
         // (aus dem Container heraus nur mit veröffentlichtem Port, z. B. FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh).
         const std::string browserHost = e.host == "0.0.0.0" ? "localhost" : e.host;
         // Hinweis, wo der Server zu erreichen ist
-        std::cout << "MarketLens: " << katalog.wertpapiere().size() << " Wertpapiere, Kursdaten aus '" << e.daten
+        std::cout << "MarketLens: " << wertpapiere.size() << " Wertpapiere (" << anbieterName << "), Kursdaten aus '" << e.daten
                   << "/', " << katalog.zentralbanken().size() << " Zentralbanken (" << zinsen.entscheidungen.size()
                   << " Zinseinträge), " << threads << " Threads\n"
                   << "Server lauscht auf " << e.host << ":" << e.port << "\n"

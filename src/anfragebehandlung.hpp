@@ -40,6 +40,7 @@
 //   503 Anfragekontingent des Anbieters erschöpft und keine Daten im Cache
 //   500 unerwarteter interner Fehler
 // Jeder Fehler wird als JSON {"fehler": "...", "status": ...} geliefert.
+// Jede erfolgreiche Antwort enthält das Feld "anbieter" (F3): Name des Kursdaten-Anbieters oder null.
 //
 // Thread-Sicherheit (E9): behandle() verändert keine Mitglieder dieser Klasse; Katalog und Zinsentscheidungen
 // werden nur gelesen. Gleichzeitige Aufrufe sind deshalb sicher, WENN die Quelle es auch ist
@@ -49,8 +50,9 @@ public:
     // wertpapiere:     Katalog der Wertpapiere (wird kopiert)
     // quelle:          Kursdaten-Quelle (Referenz, gehört dem Aufrufer)
     // entscheidungen:  Zinsentscheidungen aller Zentralbanken für die Ereignisstudie
+    // anbieter:        Name des Kursdaten-Anbieters für die Anzeige, z. B. "Twelve Data" (F3); leer = nicht angegeben
     Anfragebehandlung(std::vector<Wertpapier> wertpapiere, IPriceSource& quelle,
-                      std::vector<Zinsentscheidung> entscheidungen);
+                      std::vector<Zinsentscheidung> entscheidungen, std::string anbieter = "");
 
     // Behandelt eine Anfrage und liefert immer eine Antwort (wirft selbst keine Exceptions).
     // Nicht const, weil die Quelle beim Laden ihren Zustand ändern kann (z. B. Cache-Dateien schreiben).
@@ -75,4 +77,6 @@ private:
     IPriceSource& quelle_;
     // Zinsentscheidungen
     std::vector<Zinsentscheidung> entscheidungen_;
+    // Name des Kursdaten-Anbieters (F3), als Feld "anbieter" in allen Antworten
+    std::string anbieter_;
 };

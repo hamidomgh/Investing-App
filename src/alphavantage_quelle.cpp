@@ -150,8 +150,9 @@ Kursreihe AlphaVantageQuelle::ladeKurse(const Wertpapier& wertpapier) {
 
 // Lädt die Kurse: Anfrage stellen, Status prüfen, Antwort parsen, Cache-Hinweis übernehmen
 Kursdaten AlphaVantageQuelle::ladeKursdaten(const Wertpapier& wertpapier) {
-    // Anfrage über die Schnittstelle (wirft bei Netzwerkfehler oder Zeitüberschreitung)
-    const HttpAntwort antwort = client_.get(url(wertpapier.symbol));
+    // Anfrage über die Schnittstelle (wirft bei Netzwerkfehler oder Zeitüberschreitung).
+    // Kürzel bei Alpha Vantage (F3); ohne "symbole" im Katalog ist es "symbol", also wie vorher.
+    const HttpAntwort antwort = client_.get(url(wertpapier.symbolFuer(standardAnbieter)));
     // HTTP-Status prüfen (wirft bei 401, 404, 429 usw.)
     pruefeStatus(antwort, "prices for " + wertpapier.symbol);
     // JSON in eine Kursreihe umwandeln und die Markierung des Caches (E7) übernehmen

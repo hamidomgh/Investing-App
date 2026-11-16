@@ -17,6 +17,8 @@
   <header class="kopf">
     <!-- Name der Anwendung -->
     <h1>MarketLens</h1>
+    <!-- Anbieter der Kursdaten dieses Servers (F3), z. B. „Kurse: Twelve Data“; app.js füllt den Text -->
+    <span class="anbieter"><span id="anbieter"></span> <button type="button" class="hilfe" data-hilfe="anbieter">?</button></span>
     <!-- Formular für Wertpapier und Zeitraum; "submit" wird in app.js abgefangen (kein Neuladen der Seite) -->
     <form id="auswahl" class="auswahl">
       <!-- Auswahl des Wertpapiers; die Einträge kommen von /api/wertpapiere -->

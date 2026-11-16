@@ -1,5 +1,6 @@
 // Einbindung der Header-Datei für die Kursdaten-Klassen
 #include "kursdaten.hpp"
+#include <utility>     // Für std::move (F3)
 #include <algorithm>     // Für std::sort (nicht verwendet, aber eingebunden)
 #include <stdexcept>     // Für Exception-Klassen wie std::invalid_argument
 #include <ctime>         // Für localtime_r und strftime (Datumsformatierung)
@@ -110,11 +111,39 @@ void Kursreihe::validieren() const {
 }
 
 // Konstruktor für Wertpapier - initialisiert alle Metadaten
-Wertpapier::Wertpapier(const std::string& symbol, const std::string& name, const std::string& land, const std::string& waehrung)
-    : symbol(symbol), name(name), land(land), waehrung(waehrung) {
+Wertpapier::Wertpapier(const std::string& symbol, const std::string& name, const std::string& land, const std::string& waehrung,
+                       std::map<std::string, std::string> symbole)
+    : symbol(symbol), name(name), land(land), waehrung(waehrung), symbole(std::move(symbole)) {
     // Alle Metadaten müssen gesetzt sein
     if (symbol.empty()) throw std::invalid_argument("Invalid security: symbol must not be empty");
     if (name.empty()) throw std::invalid_argument("Invalid security " + symbol + ": name must not be empty");
     if (land.empty()) throw std::invalid_argument("Invalid security " + symbol + ": country must not be empty");
     if (waehrung.empty()) throw std::invalid_argument("Invalid security " + symbol + ": currency must not be empty");
+    // Anbieter und Kürzel in "symbole" dürfen nicht leer sein (F3)
+    for (const auto& [anbieter, kuerzel] : this->symbole) {
+        // Leerer Anbieter oder leeres Kürzel
+        if (anbieter.empty() || kuerzel.empty()) {
+            // Fehler mit Symbol
+            throw std::invalid_argument("Invalid security " + symbol + ": provider and provider symbol must not be empty");
+        }
+    }
+}
+
+// Liefert der Anbieter das Wertpapier? (F3)
+bool Wertpapier::bietet(const std::string& anbieter) const {
+    // Ohne "symbole" nur der Standardanbieter
+    if (symbole.empty()) return anbieter == standardAnbieter;
+    // Sonst nur die eingetragenen Anbieter
+    return symbole.count(anbieter) > 0;
+}
+
+// Kürzel beim Anbieter (F3)
+std::string Wertpapier::symbolFuer(const std::string& anbieter) const {
+    // Anbieter liefert es nicht: Programmierfehler des Aufrufers (er hätte vorher filtern müssen)
+    if (!bietet(anbieter)) {
+        // Fehler mit Symbol und Anbieter
+        throw std::invalid_argument("Security " + symbol + " is not available at provider " + anbieter);
+    }
+    // Ohne "symbole": das eigene Symbol; sonst der Eintrag des Anbieters
+    return symbole.empty() ? symbol : symbole.at(anbieter);
 }

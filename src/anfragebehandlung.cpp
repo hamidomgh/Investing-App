@@ -205,14 +205,21 @@ json alsJson(const Wertpapier& wp) {
     return json{{"symbol", wp.symbol}, {"name", wp.name}, {"land", wp.land}, {"waehrung", wp.waehrung}};
 }
 
-// Gemeinsame Felder aller Antworten zu einem Wertpapier: Symbol, Währung, Aktualität
-json kopf(const Wertpapier& wp, const Kursdaten& daten) {
+// Name des Anbieters als JSON: Text, oder null, wenn keiner angegeben ist (F3)
+json anbieterJson(const std::string& anbieter) {
+    // Leer -> null
+    return anbieter.empty() ? json(nullptr) : json(anbieter);
+}
+
+// Gemeinsame Felder aller Antworten zu einem Wertpapier: Symbol, Währung, Aktualität, Anbieter (F3)
+json kopf(const Wertpapier& wp, const Kursdaten& daten, const std::string& anbieter) {
     // Hinweis als Text oder null, wenn es keinen gibt
     const json hinweis = daten.hinweis.empty() ? json(nullptr) : json(daten.hinweis);
     // Objekt mit den Feldern
     return json{{"symbol", wp.symbol},       {"name", wp.name},
                 {"land", wp.land},           {"waehrung", wp.waehrung},
-                {"veraltet", daten.veraltet}, {"hinweis", hinweis}};
+                {"veraltet", daten.veraltet}, {"hinweis", hinweis},
+                {"anbieter", anbieterJson(anbieter)}};
 }
 
 // Die gemeinsamen Parameter von /api/kurse, /api/indikatoren und /api/ereignisstudie
@@ -222,8 +229,9 @@ const std::vector<std::string> zeitraumParameter = {"symbol", "von", "bis"};
 
 // Konstruktor: Daten übernehmen
 Anfragebehandlung::Anfragebehandlung(std::vector<Wertpapier> wertpapiere, IPriceSource& quelle,
-                                     std::vector<Zinsentscheidung> entscheidungen)
-    : wertpapiere_(std::move(wertpapiere)), quelle_(quelle), entscheidungen_(std::move(entscheidungen)) {}
+                                     std::vector<Zinsentscheidung> entscheidungen, std::string anbieter)
+    : wertpapiere_(std::move(wertpapiere)), quelle_(quelle), entscheidungen_(std::move(entscheidungen)),
+      anbieter_(std::move(anbieter)) {}
 
 // Zentrale Funktion: Pfad auswählen, Fehler in Antworten übersetzen. Wirft nie.
 Antwort Anfragebehandlung::behandle(const Anfrage& anfrage) {
@@ -356,7 +364,7 @@ Antwort Anfragebehandlung::wertpapiere(const Anfrage& anfrage) const {
         liste.push_back(alsJson(wp));
     }
     // Antwort {"wertpapiere": [...]}
-    return okAntwort(json{{"wertpapiere", liste}});
+    return okAntwort(json{{"wertpapiere", liste}, {"anbieter", anbieterJson(anbieter_)}});
 }
 
 // GET /api/kurse
@@ -378,7 +386,7 @@ Antwort Anfragebehandlung::kurse(const Anfrage& anfrage) {
                               {"low", k.low},                {"close", k.close}, {"volumen", k.volumen}});
     }
     // Kopf plus Kerzen
-    json inhalt = kopf(wp, daten);
+    json inhalt = kopf(wp, daten, anbieter_);
     inhalt["kerzen"] = kerzen;
     // Antwort
     return okAntwort(inhalt);
@@ -458,7 +466,7 @@ Antwort Anfragebehandlung::indikatoren(const Anfrage& anfrage) {
     }
 
     // Kopf plus alle Ergebnisse
-    json inhalt = kopf(wp, daten);
+    json inhalt = kopf(wp, daten, anbieter_);
     // Tatsächlich verwendete Parameter (inklusive Standardwerte), damit der Client sie anzeigen kann
     inhalt["parameter"] = json{{"sma", sma},
                                {"ema", ema},
@@ -514,7 +522,7 @@ Antwort Anfragebehandlung::ereignisstudie(const Anfrage& anfrage) {
                                   {"veraenderung", e.veraenderung}});
     }
     // Kopf plus Ereignisse (leere Liste, wenn keine passende Zentralbank: kein Fehler)
-    json inhalt = kopf(wp, daten);
+    json inhalt = kopf(wp, daten, anbieter_);
     inhalt["ereignisse"] = ereignisse;
     // Art des Datums (E6): Die Zinsdaten von FRED nennen den Tag, an dem der neue Zins WIRKSAM wird, nicht den
     // Tag der Sitzung. Das wird offen ausgewiesen, damit die Oberfläche es anzeigen kann.

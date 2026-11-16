@@ -239,10 +239,13 @@ TEST(Kursabruf, LeereListe) {
 TEST(OfflineDaten, JedesWertpapierDesKatalogsIstLadbar) {
     // Echter Katalog
     const Katalog k = Katalog::ausDatei(std::string(KONFIG_DIR) + "/katalog.json");
-    // Quelle auf den Ordner daten/ (DATEN_DIR setzt CMake)
-    DateiQuelle quelle(DATEN_DIR);
+    // Quelle auf den Ordner von Alpha Vantage (DATEN_DIR setzt CMake; seit F3 je Anbieter ein Unterordner)
+    DateiQuelle quelle(std::string(DATEN_DIR) + "/alphavantage");
+    // Alpha Vantage liefert alle 6 Wertpapiere des Katalogs
+    const std::vector<Wertpapier> liste = k.fuerAnbieter("alphavantage");
+    EXPECT_EQ(liste.size(), 6u);
     // Jedes Wertpapier laden
-    for (const Wertpapier& wp : k.wertpapiere()) {
+    for (const Wertpapier& wp : liste) {
         // Hier landet die Reihe
         Kursreihe reihe;
         // Darf keinen Fehler werfen

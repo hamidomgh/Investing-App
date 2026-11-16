@@ -1,0 +1,9 @@
+{
+    "meta": { "symbol": "IBM", "interval": "1day", "currency": "USD", "exchange": "NYSE", "mic_code": "XNYS", "type": "Common Stock" },
+    "values": [
+        { "datetime": "2024-01-05", "open": "162.00000", "high": "163.50000", "low": "161.25000", "close": "162.75000", "volume": "3912345" },
+        { "datetime": "2024-01-04", "open": "160.50000", "high": "162.80000", "low": "160.10000", "close": "161.90000", "volume": "4100200" },
+        { "datetime": "2024-01-03", "open": "159.00000", "high": "160.90000", "low": "158.40000", "close": "160.40000", "volume": "3800000" }
+    ],
+    "status": "ok"
+}

@@ -9,6 +9,8 @@
 
 // std::ifstream zum Lesen der Datei
 #include <fstream>
+// std::map für die Kürzel je Anbieter (F3)
+#include <map>
 // std::set, um doppelte Symbole zu erkennen
 #include <set>
 // std::stringstream, um die ganze Datei in einen String zu lesen
@@ -120,8 +122,27 @@ Katalog Katalog::ausJson(const std::string& text) {
             const std::string name = leseText(eintrag, "name");
             const std::string land = leseText(eintrag, "land");
             const std::string waehrung = leseText(eintrag, "waehrung");
-            // Wertpapier erzeugen; der Konstruktor aus E1 lehnt leere Felder ab
-            Wertpapier wp(symbol, name, land, waehrung);
+            // Optional (F3): Kürzel je Anbieter, z. B. "symbole": {"alphavantage": "IBM", "twelvedata": "IBM"}
+            std::map<std::string, std::string> symbole;
+            if (eintrag.contains("symbole")) {
+                // Muss ein Objekt sein
+                if (!eintrag["symbole"].is_object()) {
+                    // Fehler
+                    throw EintragFehler{"field 'symbole' must be an object of strings"};
+                }
+                // Jeder Eintrag: Anbieter -> Kürzel als Text
+                for (const auto& [anbieter, kuerzel] : eintrag["symbole"].items()) {
+                    // Kürzel muss Text sein
+                    if (!kuerzel.is_string()) {
+                        // Fehler nennt den Anbieter
+                        throw EintragFehler{"field 'symbole." + anbieter + "' must be a string"};
+                    }
+                    // Übernehmen
+                    symbole[anbieter] = kuerzel.get<std::string>();
+                }
+            }
+            // Wertpapier erzeugen; der Konstruktor aus E1 lehnt leere Felder (auch leere Kürzel) ab
+            Wertpapier wp(symbol, name, land, waehrung, symbole);
             // insert liefert second == false, wenn das Symbol schon vorhanden war
             if (!gesehen.insert(symbol).second) {
                 // Der erste Eintrag gilt, der doppelte wird gemeldet
@@ -214,6 +235,19 @@ const std::vector<Wertpapier>& Katalog::wertpapiere() const {
 const std::vector<KatalogFehler>& Katalog::fehler() const {
     // Referenz auf die interne Liste
     return fehler_;
+}
+
+// Nur die Wertpapiere, die ein Anbieter liefert (F3), in der Reihenfolge der Datei
+std::vector<Wertpapier> Katalog::fuerAnbieter(const std::string& anbieter) const {
+    // Ergebnis
+    std::vector<Wertpapier> ergebnis;
+    // Alle gültigen Wertpapiere prüfen
+    for (const Wertpapier& wp : wertpapiere_) {
+        // Liefert der Anbieter es?
+        if (wp.bietet(anbieter)) ergebnis.push_back(wp);
+    }
+    // Gefilterte Liste
+    return ergebnis;
 }
 
 // Liefert die gültigen Zentralbanken

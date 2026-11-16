@@ -271,3 +271,6 @@ th { font-size: .78rem; color: var(--leise); font-weight: 600; }
 .erklaerung .aktuell { font-weight: 600; font-variant-numeric: tabular-nums; }
 /* Hinweis „keine Anlageberatung“ */
 .erklaerung .beratung { color: var(--leise); font-size: .75rem; font-style: italic; }
+
+/* Anbieter der Kursdaten in der Kopfzeile (F3) */
+.anbieter { font-size: .85rem; color: var(--leise); }

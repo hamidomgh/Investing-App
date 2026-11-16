@@ -6,6 +6,7 @@
 #include <vector>        // Für std::vector
 #include <chrono>        // Für Zeitpunkte (Datum/Zeit)
 #include <stdexcept>     // Für Exception-Klassen
+#include <map>           // Für std::map (Symbol je Anbieter, F3)
 
 // Einzelne Kurskerze (Candlestick) - repräsentiert einen einzelnen Handelstag
 struct Kerze {
@@ -77,6 +78,23 @@ struct Wertpapier {
     // Währung des Wertpapiers
     std::string waehrung;
 
-    // Konstruktor für Wertpapier - initialisiert alle Metadaten
-    Wertpapier(const std::string& symbol, const std::string& name, const std::string& land, const std::string& waehrung);
+    // Kürzel je Kursdaten-Anbieter (F3), z. B. {"alphavantage": "MBG.DEX"} oder {"alphavantage": "IBM", "twelvedata": "IBM"}.
+    // Leer bedeutet: nur der Standardanbieter "alphavantage", mit "symbol" als Kürzel (wie vor F3).
+    // Steht ein Anbieter nicht darin, liefert dieser Anbieter das Wertpapier nicht.
+    std::map<std::string, std::string> symbole;
+
+    // Konstruktor für Wertpapier - initialisiert alle Metadaten; "symbole" ist optional (F3).
+    // Wirft std::invalid_argument bei leeren Feldern oder einem leeren Anbieter bzw. Kürzel in "symbole".
+    Wertpapier(const std::string& symbol, const std::string& name, const std::string& land, const std::string& waehrung,
+               std::map<std::string, std::string> symbole = {});
+
+    // Liefert dieser Anbieter das Wertpapier? (F3)
+    bool bietet(const std::string& anbieter) const;
+
+    // Kürzel, unter dem der Anbieter das Wertpapier führt (F3); ohne "symbole" ist es "symbol".
+    // Wirft std::invalid_argument, wenn der Anbieter das Wertpapier nicht liefert.
+    std::string symbolFuer(const std::string& anbieter) const;
 };
+
+// Name des Standardanbieters, der ohne Angabe von "symbole" gilt (F3)
+inline const std::string standardAnbieter = "alphavantage";

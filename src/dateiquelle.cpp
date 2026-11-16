@@ -15,8 +15,9 @@
 // std::move
 #include <utility>
 
-// Konstruktor: Ordner merken
-DateiQuelle::DateiQuelle(std::filesystem::path ordner) : ordner_(std::move(ordner)) {}
+// Konstruktor: Ordner und Parser merken; ohne Parser gilt das Format von Alpha Vantage
+DateiQuelle::DateiQuelle(std::filesystem::path ordner, Parser parser)
+    : ordner_(std::move(ordner)), parser_(parser ? std::move(parser) : Parser(AlphaVantageQuelle::parse)) {}
 
 // Pfad der Datei; prüft vorher das Symbol, damit es nicht aus dem Ordner herausführen kann
 std::filesystem::path DateiQuelle::dateiFuer(const std::string& symbol) const {
@@ -53,6 +54,6 @@ Kursreihe DateiQuelle::ladeKurse(const Wertpapier& wertpapier) {
     // Ganzen Inhalt lesen
     std::stringstream puffer;
     puffer << datei.rdbuf();
-    // Mit dem Alpha-Vantage-Parser umwandeln (gleiche Prüfungen und Fehler wie bei einer echten Antwort)
-    return AlphaVantageQuelle::parse(puffer.str(), wertpapier.symbol);
+    // Mit dem Parser des Anbieters umwandeln (gleiche Prüfungen und Fehler wie bei einer echten Antwort)
+    return parser_(puffer.str(), wertpapier.symbol);
 }

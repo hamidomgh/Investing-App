@@ -169,6 +169,13 @@ const ERKLAERUNGEN = {
     lesen: "Fibonacci-Stufen gelten bei Rücksetzern als mögliche Wendemarken; am meisten beachtet werden 38,2 %, 50 % und 61,8 %.",
     beratung: true,
   },
+  anbieter: {
+    titel: "Anbieter der Kursdaten",
+    was: "Der Anbieter, von dem dieser Server seine Kurse bezieht.",
+    wie: "Jeder Server von MarketLens arbeitet mit genau einem Anbieter (Programmoption --quelle). Alpha Vantage liefert alle Wertpapiere des Katalogs, Twelve Data im kostenlosen Tarif nur die US-Wertpapiere. Laufen zwei Server nebeneinander (z. B. Port 8080 und 8081), hat jeder eigene Kursdaten, einen eigenen Zwischenspeicher und eigene Zeichnungen; nur Katalog und Zinsdaten sind gemeinsam.",
+    lesen: "Die Schlusskurse beider Anbieter stimmen bis auf Rundungen (etwa 0,01) überein. Das gehandelte Volumen zählen die Anbieter unterschiedlich.",
+    aktuell: "Aktuell: {anbieter}.",
+  },
   veraltet: {
     titel: "Ältere Daten",
     was: "Die Daten stammen aus dem Zwischenspeicher und sind älter als ein Tag, weil keine aktuellen Daten abgerufen werden konnten (Netz nicht erreichbar oder Anfragekontingent des Anbieters erschöpft).",

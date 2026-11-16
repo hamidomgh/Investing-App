@@ -36,7 +36,9 @@ struct KatalogFehler {
 //       { "name": "EZB", "laender": ["Deutschland", "Frankreich", ...], "waehrung": "EUR", "fredSerie": "ECBDFR" }
 //   ]
 //
-// "symbol" ist das Symbol, das der Kursdaten-Anbieter erwartet (bei Alpha Vantage z. B. "MBG.DEX").
+// "symbol" ist das Symbol, das angezeigt wird. Optional (F3) nennt "symbole" das Kürzel je Anbieter, z. B.
+//   "symbole": {"alphavantage": "IBM", "twelvedata": "IBM"}
+// Ohne "symbole" gilt "symbol" beim Standardanbieter Alpha Vantage (bei Alpha Vantage z. B. "MBG.DEX").
 // Ein neues Wertpapier oder Land wird durch einen neuen Eintrag ergänzt, ohne den Code zu ändern.
 // Ein fehlerhafter Eintrag wird übersprungen und in fehler() gemeldet; die übrigen bleiben erhalten.
 class Katalog {
@@ -51,6 +53,10 @@ public:
 
     // Alle gültigen Wertpapiere, in der Reihenfolge der Datei
     const std::vector<Wertpapier>& wertpapiere() const;
+
+    // Nur die Wertpapiere, die der Anbieter liefert (F3), z. B. fuerAnbieter("twelvedata").
+    // Wertpapiere ohne "symbole" gehören zum Standardanbieter "alphavantage".
+    std::vector<Wertpapier> fuerAnbieter(const std::string& anbieter) const;
 
     // Alle fehlerhaften Einträge (leer, wenn alles in Ordnung ist)
     const std::vector<KatalogFehler>& fehler() const;

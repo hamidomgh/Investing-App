@@ -10,6 +10,9 @@
 #include "zinsabruf.hpp"
 // Netzwerkschicht des Servers
 #include "http_server.hpp"
+// Live-Zugriff (F5): echter HTTP(S)-Client und die Kette Anbieter -> Cache -> Netz
+#include "live_http_client.hpp"
+#include "live_kursquelle.hpp"
 // Katalog der Wertpapiere (E2)
 #include "katalog.hpp"
 // Fehlerklassen (für Fehler beim Lesen des Katalogs)
@@ -30,6 +33,8 @@
 #include <chrono>
 // std::cout und std::cerr
 #include <iostream>
+// std::unique_ptr für die gewählte Kursquelle (offline oder live)
+#include <memory>
 // std::string
 #include <string>
 // std::thread
@@ -59,6 +64,12 @@ struct Einstellungen {
     std::string web = "web";
     // Anzahl der Arbeits-Threads (E9); 0 = so viele, wie der Rechner Kerne meldet
     int threads = 0;
+    // F5: Kurse live vom Anbieter holen statt aus --daten
+    bool live = false;
+    // F5: Ordner des Festplatten-Caches; leer = cache/<quelle>
+    std::string cache;
+    // F5: Gültigkeit der Cache-Einträge in Stunden; 0 = Empfehlung des Anbieters (12 h bzw. 1 h)
+    int gueltigkeitStunden = 0;
 };
 
 // Gibt die Hilfe aus
@@ -73,6 +84,10 @@ void hilfe() {
                  "  --zinsen ORDNER  gespeicherte FRED-Zinsdaten <SERIE>.json (Standard daten/zinsen)\n"
                  "  --web ORDNER     Dateien der Weboberfläche (Standard web)\n"
                  "  --threads N      Arbeits-Threads (Standard: Anzahl der Prozessorkerne)\n"
+                 "  --live           Kurse live vom Anbieter holen (braucht Build mit MARKETLENS_LIVE_HTTP=ON)\n"
+                 "  --cache ORDNER   nur mit --live: Cache der Antworten (Standard cache/<NAME des Anbieters>)\n"
+                 "  --gueltigkeit H  nur mit --live: Stunden, bis neu abgerufen wird, 1-168\n"
+                 "                   (Standard: alphavantage 12, twelvedata 1)\n"
                  "  --hilfe          diese Hilfe\n";
 }
 
@@ -90,6 +105,12 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
             hilfe();
             rueckgabe = 0;
             return false;
+        }
+        // Live-Zugriff (F5): Schalter ohne Wert
+        if (a == "--live") {
+            // Merken und mit dem nächsten Argument weitermachen
+            e.live = true;
+            continue;
         }
         // Alle anderen Optionen brauchen einen Wert danach
         if (i + 1 >= args.size()) {
@@ -125,6 +146,20 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
                 rueckgabe = 2;
                 return false;
             }
+        } else if (a == "--gueltigkeit") {
+            // Stunden als Zahl lesen
+            const auto r = std::from_chars(wert.data(), wert.data() + wert.size(), e.gueltigkeitStunden);
+            // Nur ganze Zahlen von 1 bis 168 (eine Woche); 0 würde bei jeder Anfrage das Kontingent belasten
+            if (r.ec != std::errc() || r.ptr != wert.data() + wert.size() || e.gueltigkeitStunden < 1 ||
+                e.gueltigkeitStunden > 168) {
+                // Ungültige Gültigkeit
+                std::cerr << "Fehler: ungültige Gültigkeit (Stunden 1-168): " << wert << "\n";
+                rueckgabe = 2;
+                return false;
+            }
+        } else if (a == "--cache") {
+            // Cache-Ordner
+            e.cache = wert;
         } else if (a == "--katalog") {
             // Katalogdatei
             e.katalog = wert;
@@ -155,6 +190,25 @@ bool leseArgumente(int argc, char* argv[], Einstellungen& e, int& rueckgabe) {
             return false;
         }
     }
+    // Optionen, die nicht zusammenpassen (F5): lieber deutlich ablehnen als stillschweigend ignorieren
+    if (e.live && !e.daten.empty()) {
+        // --daten gilt nur offline
+        std::cerr << "Fehler: --daten und --live schließen sich aus\n";
+        rueckgabe = 2;
+        return false;
+    }
+    if (!e.live && (!e.cache.empty() || e.gueltigkeitStunden > 0)) {
+        // Cache und Gültigkeit wirken nur live
+        std::cerr << "Fehler: --cache und --gueltigkeit gelten nur zusammen mit --live\n";
+        rueckgabe = 2;
+        return false;
+    }
+    if (e.live && !LiveHttpClient::unterstuetztHttps()) {
+        // Beide Anbieter brauchen HTTPS; ohne OpenSSL schon beim Start abbrechen, nicht erst beim ersten Abruf
+        std::cerr << "Fehler: --live braucht HTTPS; bauen mit: cmake -B build-live -DMARKETLENS_LIVE_HTTP=ON\n";
+        rueckgabe = 2;
+        return false;
+    }
     // Alles gelesen
     return true;
 }
@@ -174,8 +228,10 @@ int main(int argc, char* argv[]) {
         // Hilfe gezeigt oder Fehler
         return rueckgabe;
     }
-    // Ohne --daten: eigener Ordner je Anbieter, damit sich die Daten nicht stören (F3)
-    if (e.daten.empty()) e.daten = "daten/" + e.quelle;
+    // Ohne --daten: eigener Ordner je Anbieter, damit sich die Daten nicht stören (F3); nur offline
+    if (!e.live && e.daten.empty()) e.daten = "daten/" + e.quelle;
+    // Ohne --cache: eigener Cache-Ordner je Anbieter (F5), z. B. cache/twelvedata
+    if (e.live && e.cache.empty()) e.cache = "cache/" + e.quelle;
     // Twelve Data oder Alpha Vantage? (F3)
     const bool twelve = e.quelle == TwelveDataQuelle::anbieterId;
     // Name für Anzeige und Startmeldung
@@ -208,20 +264,35 @@ int main(int argc, char* argv[]) {
             std::cerr << "Warnung: Zinsdaten von " << f.zentralbank << " nicht geladen: " << f.meldung << "\n";
         }
 
-        // Kette der Anfragebearbeitung (E9):
-        //   Server -> Ergebnis-Cache -> Anfragebehandlung -> SynchronisierteQuelle -> DateiQuelle
-        // Offline-Kursquelle (der Live-Zugriff über HTTPS kommt später mit einer CMake-Option)
-        // Format der Dateien je nach Anbieter (F3)
-        DateiQuelle dateiQuelle(e.daten, twelve ? DateiQuelle::Parser(TwelveDataQuelle::parse)
-                                                : DateiQuelle::Parser(AlphaVantageQuelle::parse));
+        // Kette der Anfragebearbeitung (E9, F5):
+        //   Server -> Ergebnis-Cache -> Anfragebehandlung -> SynchronisierteQuelle -> Kursquelle
+        // Kursquelle offline:  DateiQuelle (gespeicherte Antworten aus --daten)
+        // Kursquelle live:     LiveKursquelle -> CachingHttpClient (--cache) -> LiveHttpClient -> Internet
+        // Echte Uhr für den Festplatten-Cache (live) und den Ergebnis-Cache
+        SystemUhr uhr;
+        // Echter Netz-Client; wird nur live benutzt, muss aber so lange leben wie die Kursquelle
+        LiveHttpClient netz;
+        // Gültigkeit der Cache-Einträge: Vorgabe oder Empfehlung des Anbieters (nur live)
+        const std::chrono::hours gueltigkeit = e.gueltigkeitStunden > 0
+                                                   ? std::chrono::hours{e.gueltigkeitStunden}
+                                                   : LiveKursquelle::standardGueltigkeit(e.quelle);
+        // Gewählte Kursquelle; unique_ptr, weil erst zur Laufzeit feststeht, welche Klasse es ist
+        std::unique_ptr<IPriceSource> kursquelle;
+        if (e.live) {
+            // Live (F5); wirft KonfigurationsFehler, wenn der API-Key fehlt
+            kursquelle = std::make_unique<LiveKursquelle>(e.quelle, netz, uhr, e.cache, gueltigkeit);
+        } else {
+            // Offline; Format der Dateien je nach Anbieter (F3)
+            kursquelle = std::make_unique<DateiQuelle>(e.daten, twelve ? DateiQuelle::Parser(TwelveDataQuelle::parse)
+                                                                       : DateiQuelle::Parser(AlphaVantageQuelle::parse));
+        }
         // Nur ein Thread gleichzeitig lädt Daten; Berechnungen laufen parallel
-        SynchronisierteQuelle quelle(dateiQuelle);
+        SynchronisierteQuelle quelle(*kursquelle);
         // Nur die Wertpapiere, die dieser Anbieter liefert (F3: bei Twelve Data nur die US-Wertpapiere)
         const std::vector<Wertpapier> wertpapiere = katalog.fuerAnbieter(e.quelle);
         // Logik der Schnittstelle mit Katalog, Kursquelle, Zinsentscheidungen und Name des Anbieters
         Anfragebehandlung api(wertpapiere, quelle, zinsen.entscheidungen, anbieterName);
         // Ergebnisse 5 Minuten aufbewahren, höchstens 1000 verschiedene Anfragen
-        SystemUhr uhr;
         ErgebnisCache cache(uhr, std::chrono::minutes{5}, 1000);
         GecachteAnfragebehandlung gecacht(api, cache);
 
@@ -264,8 +335,12 @@ int main(int argc, char* argv[]) {
         // (aus dem Container heraus nur mit veröffentlichtem Port, z. B. FAUP_RUN_ARGS="-p 8080:8080" ./dev.sh).
         const std::string browserHost = e.host == "0.0.0.0" ? "localhost" : e.host;
         // Hinweis, wo der Server zu erreichen ist
-        std::cout << "MarketLens: " << wertpapiere.size() << " Wertpapiere (" << anbieterName << "), Kursdaten aus '" << e.daten
-                  << "/', " << katalog.zentralbanken().size() << " Zentralbanken (" << zinsen.entscheidungen.size()
+        // Herkunft der Kurse: offline aus dem Datenordner oder live mit Cache und Gültigkeit (F5)
+        const std::string herkunft = e.live ? "Kursdaten live, Cache '" + e.cache + "/' (" +
+                                                  std::to_string(gueltigkeit.count()) + " h)"
+                                            : "Kursdaten aus '" + e.daten + "/'";
+        std::cout << "MarketLens: " << wertpapiere.size() << " Wertpapiere (" << anbieterName << "), " << herkunft
+                  << ", " << katalog.zentralbanken().size() << " Zentralbanken (" << zinsen.entscheidungen.size()
                   << " Zinseinträge), " << threads << " Threads\n"
                   << "Server lauscht auf " << e.host << ":" << e.port << "\n"
                   << "Im Browser öffnen: http://" << browserHost << ":" << e.port << "/  (beenden mit Strg+C)\n"

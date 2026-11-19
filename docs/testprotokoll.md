@@ -131,6 +131,40 @@ Vorbereitung: zwei WSL-Terminals außerhalb des Containers, im Projektordner, Pr
 |---|---|---|---|
 | 2026-11-16 | Microsoft Edge (Version bitte eintragen) | Abdul Hamid Al Moghrabi | ✅ alle 10 Testfälle erfüllt |
 
+## F5 – Live-Zugriff auf beide Anbieter (Feature, siehe `Features/F5_Live_Zugriff.md`)
+
+Vorbereitung: Image mit `libssl-dev` neu gebaut (`./dev.sh build`), Live-Build im Container (ohne nacktes `-j`):
+
+    cmake -B build-live -DMARKETLENS_LIVE_HTTP=ON && cmake --build build-live && ctest --test-dir build-live
+
+Dann zwei WSL-Terminals außerhalb des Containers, im Projektordner. `--env-file` übergibt die API-Keys
+(`ALPHAVANTAGE_API_KEY`, `TWELVEDATA_API_KEY`) wie `./dev.sh`:
+
+    # Terminal 1: Alpha Vantage live
+    podman run --rm -it -p 8080:8080 --env-file ~/.config/faup/env -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build-live/projekt --live --quelle alphavantage --port 8080 --host 0.0.0.0
+    # Terminal 2: Twelve Data live
+    podman run --rm -it -p 8081:8081 --env-file ~/.config/faup/env -v "$PWD:/work:Z" -w /work --userns=keep-id:uid=1000,gid=1000 faup-dev ./build-live/projekt --live --quelle twelvedata --port 8081 --host 0.0.0.0
+
+Vor dem ersten Durchlauf `cache/` löschen, damit F5-2 wirklich übers Netz geht.
+Achtung Kontingent: Alpha Vantage erlaubt nur ca. 25 Abrufe pro Tag; der ganze Test braucht höchstens 7.
+
+| Nr. | Schritt | Erwartetes Ergebnis | Ergebnis |
+|---|---|---|---|
+| F5-1 | Startmeldungen | 1: „… (Alpha Vantage), Kursdaten live, Cache 'cache/alphavantage/' (12 h) …“; 2: „… (Twelve Data), Kursdaten live, Cache 'cache/twelvedata/' (1 h) …“ | |
+| F5-2 | Erster Abruf | http://localhost:8080/ und http://localhost:8081/, je IBM → Kerzen bis zum letzten Handelstag (neuer als in `daten/`); kein Hinweis auf veraltete Daten; danach liegt je eine Datei in `cache/alphavantage/` und `cache/twelvedata/` | |
+| F5-3 | Beide Anbieter gleich | Schlusskurs von IBM am letzten Tag in beiden Tabs gleich (höchstens 0,01 Unterschied) | |
+| F5-4 | Kein Key in den Dateien | `grep -r apikey cache/` und `grep -r "<dein Key>" cache/` finden nichts | |
+| F5-5 | Neustart ohne neuen Abruf | Beide Server mit Strg+C beenden und neu starten, IBM öffnen → gleiche Daten sofort; Änderungszeit der Dateien in `cache/` (`ls -l --time-style=full-iso cache/*`) unverändert | |
+| F5-6 | Netz weg: alte Daten | Terminal 2 neu mit `--gueltigkeit 1` und zusätzlich `--network none` vor `faup-dev`, frühestens eine Stunde nach F5-2 (der Abrufzeitpunkt steht in der Datei, `touch` hilft nicht) IBM öffnen → Kurse werden angezeigt, dazu der Hinweis auf veraltete Daten (Datum des Abrufs, Netzwerkfehler) | |
+| F5-7 | Netz weg, kein Cache | Wie F5-6, aber AAPL (noch nie live geladen) → Fehlermeldung „Die Datenquelle liefert für dieses Wertpapier keine Daten“ o. ä. (HTTP 502), Seite bleibt bedienbar | |
+| F5-8 | Fehlender Key | `podman run` **ohne** `--env-file` → Programm endet sofort mit „Fehler: …TWELVEDATA_API_KEY…“ (bzw. ALPHAVANTAGE_API_KEY) | |
+| F5-9 | `--live` im normalen Build | Im Container `./build/projekt --live` → „Fehler: --live braucht HTTPS; bauen mit: cmake -B build-live -DMARKETLENS_LIVE_HTTP=ON“ | ✅ (2026-11-19) |
+| F5-10 | Unpassende Optionen | `./build/projekt --cache x` → „--cache und --gueltigkeit gelten nur zusammen mit --live“; `--live --daten daten` → „--daten und --live schließen sich aus“; `--live --gueltigkeit 0` → „ungültige Gültigkeit (Stunden 1-168)“ | ✅ (2026-11-19) |
+
+| Datum | Browser und Version | Prüfer | Ergebnis F5 |
+|---|---|---|---|
+| | | | |
+
 ## Automatisch geprüft (zur Ergänzung, nicht Teil des manuellen Tests)
 
 - `Weboberflaeche.WirdVomServerAusgeliefert`: `/`, `/app.js`, `/zeichnen.js`, `/erklaerungen.js`, `/style.css` mit Status 200 und richtigem Inhaltstyp; `zeichnen.js` und `erklaerungen.js` werden vor `app.js` eingebunden

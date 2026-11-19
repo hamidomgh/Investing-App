@@ -53,6 +53,7 @@ add_library(projekt_lib
     src/fred_quelle.cpp
     src/datei_zinsquelle.cpp
     src/zinsabruf.cpp
+    src/live_kursquelle.cpp
 )
 # Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
 target_include_directories(projekt_lib PUBLIC src)
@@ -63,8 +64,21 @@ target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
 # Netzwerkschicht als eigene kleine Bibliothek (E8/E9): reine Übersetzung zwischen cpp-httplib und
 # IAnfrageBehandler. Getrennt von projekt_lib, damit nur diese Datei die große httplib.h übersetzt.
 # Die Tests binden sie ein, um den Server über echte lokale Sockets zu prüfen (Parallelität, Beenden).
-add_library(projekt_server src/http_server.cpp)
+# Dazu der Live-Client (LiveHttpClient), der httplib ebenfalls als Client nutzt.
+add_library(projekt_server src/http_server.cpp src/live_http_client.cpp)
 target_link_libraries(projekt_server PUBLIC projekt_lib)
+
+# Live-Zugriff über HTTPS (Standard AUS): nur dann wird OpenSSL gebraucht (Paket libssl-dev).
+# Ohne die Option bleibt der Build netzfrei; der LiveHttpClient kann dann nur http:// (für die Tests).
+option(MARKETLENS_LIVE_HTTP "Live-Zugriff auf die Anbieter über HTTPS (braucht OpenSSL)" OFF)
+if(MARKETLENS_LIVE_HTTP)
+    # OpenSSL suchen; fehlt es, bricht CMake mit einer Meldung ab
+    find_package(OpenSSL REQUIRED)
+    # PUBLIC: Makro und Bibliotheken gelten auch für alle, die projekt_server einbinden (Programm, Tests).
+    # So sehen alle Dateien httplib.h mit derselben Einstellung.
+    target_compile_definitions(projekt_server PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
+    target_link_libraries(projekt_server PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+endif()
 # cpp-httplib (third_party/httplib.h); SYSTEM unterdrückt Warnungen aus fremdem Code
 target_include_directories(projekt_server SYSTEM PRIVATE third_party)
 # Threads (pthread) für cpp-httplib und unseren ThreadPool
@@ -101,6 +115,8 @@ add_executable(tests
     tests/test_http_server.cpp
     tests/test_fred.cpp
     tests/test_twelvedata.cpp
+    tests/test_live_http_client.cpp
+    tests/test_live_kursquelle.cpp
 )
 # Verlinkt die Tests mit der Bibliothek und Google Test
 target_link_libraries(tests PRIVATE projekt_lib projekt_server GTest::gtest_main)

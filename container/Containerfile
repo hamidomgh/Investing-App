@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential cmake ninja-build gdb \
         clang clang-format clang-tidy libclang-rt-19-dev \
         libgtest-dev libgmock-dev gcovr \
+        libssl-dev \
         git ca-certificates curl less nano ripgrep file \
     && rm -rf /var/lib/apt/lists/*
 

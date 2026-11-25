@@ -1,0 +1,536 @@
+<title>MarketLens Explained</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column with a sticky view switch; overview = short story, in-depth = numbered chapters along the data path */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --fg: #14202b;
+  --muted: #5a6875;
+  --line: #d8dfe4;
+  --accent: #0b6e72;
+  --accent-soft: #dcefef;
+  --up: #1d8a4e;
+  --down: #c2412d;
+  --code-bg: #eaeff2;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1619; --surface: #162026; --fg: #e3eaee; --muted: #93a3ad; --line: #2a3840;
+    --accent: #4fc2c4; --accent-soft: #173a3c; --up: #4cc17f; --down: #ef7a64; --code-bg: #1c2930;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1619; --surface: #162026; --fg: #e3eaee; --muted: #93a3ad; --line: #2a3840;
+  --accent: #4fc2c4; --accent-soft: #173a3c; --up: #4cc17f; --down: #ef7a64; --code-bg: #1c2930;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 80px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.55rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+code { font-family: var(--f-mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { font-family: var(--f-mono); font-size: 0.82rem; line-height: 1.55; background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 0; }
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.stack-lg { display: flex; flex-direction: column; gap: 56px; }
+
+/* header + ticker strip */
+.hero { display: flex; flex-direction: column; gap: 14px; padding-bottom: 28px; }
+.ticker { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 8px; }
+.ticker b { color: var(--fg); font-weight: 500; }
+.ticker .cur { color: var(--accent); }
+
+/* view switch */
+.switch { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; margin-bottom: 28px; border-bottom: 1px solid var(--line); }
+.switch nav { display: inline-flex; background: var(--code-bg); border-radius: 999px; padding: 4px; gap: 4px; }
+.switch a { text-decoration: none; font-family: var(--f-display); font-weight: 600; font-size: 0.95rem; color: var(--muted); padding: 7px 18px; border-radius: 999px; }
+.switch a[aria-current="page"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.switch a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* stat row */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.stat .n { font-family: var(--f-display); font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 0.82rem; color: var(--muted); }
+
+/* steps (a real sequence) */
+.steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 44px 1fr; gap: 0 14px; padding-block: 14px; border-top: 1px solid var(--line); }
+.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps li::before { content: counter(s); font-family: var(--f-display); font-weight: 700; font-size: 1.4rem; color: var(--accent); grid-row: span 2; }
+.steps li > * { min-width: 0; }
+.steps strong { font-family: var(--f-display); font-weight: 600; }
+
+/* request pipeline */
+.pipe { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.pipe .box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 4px 16px; align-items: baseline; }
+.pipe .box.hl { border-color: var(--accent); background: var(--accent-soft); }
+.pipe .box code { justify-self: start; }
+.pipe .box span { color: var(--muted); font-size: 0.9rem; min-width: 0; }
+.pipe .arrow { align-self: flex-start; margin-left: 28px; height: 18px; border-left: 2px solid var(--accent); position: relative; }
+.pipe .arrow::after { content: ""; position: absolute; left: -6px; bottom: -2px; border: 5px solid transparent; border-top: 7px solid var(--accent); }
+.pipe .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pipe .fork .box { grid-template-columns: 1fr; }
+.pipe .tag { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+th { font-family: var(--f-mono); font-weight: 500; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--code-bg); }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--f-mono); font-size: 0.84rem; white-space: nowrap; }
+
+/* chapter */
+.chapter { display: flex; flex-direction: column; gap: 18px; scroll-margin-top: 80px; }
+.chapter > header { display: flex; flex-direction: column; gap: 6px; }
+.chapter .dod { font-family: var(--f-mono); font-size: 0.74rem; color: var(--muted); }
+.note { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.93rem; }
+.formula { font-family: var(--f-mono); font-size: 0.86rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre; line-height: 1.7; }
+ul.plain { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 68ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.two > div { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; }
+.toc a { font-size: 0.82rem; text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; color: var(--fg); background: var(--surface); }
+.toc a:hover { border-color: var(--accent); }
+.up { color: var(--up); } .down { color: var(--down); }
+.cta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cta a { font-family: var(--f-display); font-weight: 600; text-decoration: none; background: var(--accent); color: var(--surface); padding: 9px 16px; border-radius: 8px; }
+footer { margin-top: 64px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 560px) {
+  .pipe .box { grid-template-columns: 1fr; }
+  .pipe .fork { grid-template-columns: 1fr; }
+  .switch a { padding: 7px 14px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">C++20 · Web app · Technical analysis</span>
+    <h1>MarketLens</h1>
+    <p class="lede">A C++ server that loads daily stock prices from several countries and central-bank interest-rate decisions, computes technical-analysis indicators from them, and shows everything in a browser chart.</p>
+    <div class="ticker" aria-label="Securities in the catalog">
+      <span><b>IBM</b> USA · USD</span>
+      <span><b>AAPL</b> USA · USD</span>
+      <span><b>MBG.DEX</b> Germany · EUR</span>
+      <span><b>TSCO.LON</b> UK · GBX</span>
+      <span><b>SHOP.TRT</b> Canada · CAD</span>
+      <span><b>RELIANCE.BSE</b> India · INR</span>
+      <span class="cur">Fed · ECB</span>
+    </div>
+  </header>
+
+  <div class="switch">
+    <nav aria-label="Choose a version">
+      <a href="#overview" id="tab-overview">Short version</a>
+      <a href="#in-depth" id="tab-in-depth">Detailed version</a>
+    </nav>
+  </div>
+
+  <!-- ===================== SHORT VERSION ===================== -->
+  <section id="view-overview" class="stack-lg">
+    <div class="stack">
+      <h2>In one paragraph</h2>
+      <p>You pick a stock in the browser. The browser asks the MarketLens server for data. The server gets the price history (from saved files, or live from Alpha Vantage or Twelve Data), checks that every price is valid, and calculates moving averages, momentum, risk figures and support/resistance lines. It also checks how the stock moved the day after each interest-rate decision of its country's central bank. The answer goes back as JSON, and the page draws a chart from it. Many people can ask at once: a pool of threads handles requests in parallel, and results are cached so the same question is never computed twice.</p>
+    </div>
+
+    <div class="stats" role="list">
+      <div class="stat" role="listitem"><span class="n">6</span><span class="l">securities in 5 countries</span></div>
+      <div class="stat" role="listitem"><span class="n">2</span><span class="l">central banks (Fed, ECB)</span></div>
+      <div class="stat" role="listitem"><span class="n">2</span><span class="l">price providers</span></div>
+      <div class="stat" role="listitem"><span class="n">4</span><span class="l">JSON API endpoints</span></div>
+      <div class="stat" role="listitem"><span class="n">224</span><span class="l">automated tests, all offline</span></div>
+    </div>
+
+    <div class="stack">
+      <h2>What happens when you click “Anzeigen”</h2>
+      <ol class="steps">
+        <li><strong>The catalog says what exists.</strong><p>A JSON file (<code>config/katalog.json</code>) lists each security with symbol, name, country and currency, and each central bank with the countries it is responsible for. Adding a country means adding a line, not changing code.</p></li>
+        <li><strong>The server loads the prices.</strong><p>Offline it reads saved API answers from <code>daten/</code>. Live, it calls the provider over HTTPS and stores the answer on disk so the small free quota lasts. Every candle (open, high, low, close, volume) is checked for consistency.</p></li>
+        <li><strong>It calculates the analysis.</strong><p>SMA, EMA, MACD and RSI for trend and momentum; Bollinger bands, ATR, returns, volatility and maximum drawdown for risk; support/resistance levels and pivot points; and the event study for rate decisions.</p></li>
+        <li><strong>It answers many requests at once.</strong><p>A thread pool works on requests in parallel. A shared result cache remembers answers for 5 minutes, and if two people ask the same thing at the same moment, it is computed only once.</p></li>
+        <li><strong>The browser draws it.</strong><p>Plain HTML and JavaScript, served by the same server, draw the candle chart with indicators, level lines, rate-decision markers, RSI and MACD panels. You can draw your own trend lines, and every number has a “?” that explains it.</p></li>
+      </ol>
+    </div>
+
+    <div class="two">
+      <div>
+        <h3>Why it is built this way</h3>
+        <ul class="plain">
+          <li>The network sits behind interfaces, so all tests run offline with recorded answers.</li>
+          <li>The analysis code doesn’t know about the server, so it can be tested on its own.</li>
+          <li>Free API quotas are small, so answers are cached on disk with an expiry time.</li>
+          <li>API keys come from environment variables and never enter the repository.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Run it</h3>
+<pre><code># build and test (offline)
+cmake -B build && cmake --build build \
+  && ctest --test-dir build
+
+# start, then open http://127.0.0.1:8080/
+./build/projekt</code></pre>
+      </div>
+    </div>
+
+    <div class="cta"><a href="#in-depth">Read the detailed version</a><span class="lede" style="font-size:.95rem">Every part, class by class, with formulas and API parameters.</span></div>
+  </section>
+
+  <!-- ===================== DETAILED VERSION ===================== -->
+  <section id="view-in-depth" class="stack-lg" hidden>
+    <div class="stack">
+      <p class="lede">This version follows the data from the catalog to the pixel. Chapter labels E1–E10 are the project properties from <code>PROJEKT.md</code>; F1–F5 are the extra features in <code>Features/</code>. Class names are the real German names in <code>src/</code>.</p>
+      <nav class="toc" aria-label="Chapters">
+        <a href="#in-depth" data-jump="c-arch">Architecture</a>
+        <a href="#in-depth" data-jump="c-model">Data model</a>
+        <a href="#in-depth" data-jump="c-catalog">Catalog</a>
+        <a href="#in-depth" data-jump="c-sources">Data sources</a>
+        <a href="#in-depth" data-jump="c-cache">Disk cache</a>
+        <a href="#in-depth" data-jump="c-trend">Trend</a>
+        <a href="#in-depth" data-jump="c-risk">Risk</a>
+        <a href="#in-depth" data-jump="c-sr">Support/Resistance</a>
+        <a href="#in-depth" data-jump="c-event">Event study</a>
+        <a href="#in-depth" data-jump="c-api">HTTP API</a>
+        <a href="#in-depth" data-jump="c-conc">Concurrency</a>
+        <a href="#in-depth" data-jump="c-web">Web UI</a>
+        <a href="#in-depth" data-jump="c-run">Running</a>
+        <a href="#in-depth" data-jump="c-test">Testing</a>
+        <a href="#in-depth" data-jump="c-files">File map</a>
+      </nav>
+    </div>
+
+    <!-- Architecture -->
+    <article class="chapter" id="c-arch">
+      <header><span class="eyebrow">Overview</span><h2>Architecture: the request chain</h2></header>
+      <p>Each layer only knows the interface of the layer below it. That is what makes every part testable alone. <code>main.cpp</code> wires the chain together at startup:</p>
+      <div class="pipe" aria-label="Request chain from browser to data">
+        <div class="box"><code>Browser (web/)</code><span>sends <code>GET /api/indikatoren?symbol=IBM</code></span></div>
+        <div class="arrow"></div>
+        <div class="box"><code>HttpServer</code><span>cpp-httplib socket layer + <code>ThreadPool</code>; serves <code>web/</code> files, passes <code>/api/*</code> on as an <code>Anfrage</code></span></div>
+        <div class="arrow"></div>
+        <div class="box hl"><code>GecachteAnfragebehandlung</code><span>looks the request up in the <code>ErgebnisCache</code> (5 min, max 1000 entries)</span></div>
+        <div class="arrow"></div>
+        <div class="box"><code>Anfragebehandlung</code><span>checks parameters, runs the analysis, builds the JSON <code>Antwort</code>. No sockets here.</span></div>
+        <div class="arrow"></div>
+        <div class="box"><code>SynchronisierteQuelle</code><span>mutex: only one thread loads data at a time; calculations stay parallel</span></div>
+        <div class="arrow"></div>
+        <div class="fork">
+          <div class="box"><span class="tag">offline (default)</span><code>DateiQuelle</code><span>reads <code>daten/&lt;provider&gt;/&lt;SYMBOL&gt;.json</code> with the provider’s parser</span></div>
+          <div class="box"><span class="tag">--live (F5)</span><code>LiveKursquelle</code><span>→ provider source → <code>CachingHttpClient</code> → <code>LiveHttpClient</code> → internet</span></div>
+        </div>
+      </div>
+      <p>Interest-rate decisions are loaded once at startup (<code>DateiZinsquelle</code> + <code>ladeAlleEntscheidungen</code>) and handed to <code>Anfragebehandlung</code>, because they change rarely.</p>
+    </article>
+
+    <!-- Data model -->
+    <article class="chapter" id="c-model">
+      <header><span class="eyebrow">E1</span><h2>Data model with validation</h2><span class="dod">src/kursdaten.hpp · src/zinsentscheidung.hpp · src/zentralbank.hpp</span></header>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th>Holds</th><th>Rejects</th></tr></thead>
+        <tbody>
+          <tr><td><code>Kerze</code></td><td>date, open, high, low, close, volume</td><td>high &lt; low; open or close outside low..high; negative volume</td></tr>
+          <tr><td><code>Kursreihe</code></td><td>a list of candles</td><td>dates that are not strictly ascending (also duplicates). The error message names the date.</td></tr>
+          <tr><td><code>Wertpapier</code></td><td>symbol, name, country, currency, symbol per provider</td><td>empty fields</td></tr>
+          <tr><td><code>Zentralbank</code></td><td>name, list of countries, currency, FRED series</td><td><code>zustaendigFuer(land)</code> answers whether the bank covers a country</td></tr>
+          <tr><td><code>Zinsentscheidung</code></td><td>central bank, country, date, policy rate</td><td>invalid values</td></tr>
+        </tbody>
+      </table></div>
+      <p>Validation happens when data enters the program. Everything after that can assume clean data.</p>
+    </article>
+
+    <!-- Catalog -->
+    <article class="chapter" id="c-catalog">
+      <header><span class="eyebrow">E2 · part 3</span><h2>The catalog</h2><span class="dod">config/katalog.json · src/katalog.cpp</span></header>
+      <p>“All countries” is handled with data, not code. Each security lists which providers know it and under which symbol. Twelve Data’s free plan only covers US stocks, so only IBM and AAPL have a <code>twelvedata</code> symbol.</p>
+<pre><code>{ "symbol": "MBG.DEX", "name": "Mercedes-Benz Group AG",
+  "land": "Deutschland", "waehrung": "EUR",
+  "symbole": { "alphavantage": "MBG.DEX" } }
+
+{ "name": "EZB", "laender": ["Belgien", "Deutschland", "Frankreich", …],
+  "waehrung": "EUR", "fredSerie": "ECBDFR" }</code></pre>
+      <ul class="plain">
+        <li>A broken entry is reported as a warning (<code>KatalogFehler</code> with position and reason) and skipped. The others still work.</li>
+        <li><code>Katalog::fuerAnbieter("twelvedata")</code> returns only the securities that provider supports.</li>
+        <li>Central banks are matched to securities <strong>by country</strong>. The ECB lists all 21 euro countries, so a German stock gets ECB decisions.</li>
+        <li>Prices stay in their own currency. There is no currency conversion.</li>
+      </ul>
+    </article>
+
+    <!-- Sources -->
+    <article class="chapter" id="c-sources">
+      <header><span class="eyebrow">E2 · E6 · F3 · F5</span><h2>Data sources behind interfaces</h2><span class="dod">src/http_client.hpp · src/price_source.hpp · src/rate_source.hpp</span></header>
+      <p>Three small interfaces hide the network. Tests swap in fakes; the real program plugs in real classes.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Interface</th><th>Method</th><th>Implementations</th></tr></thead>
+        <tbody>
+          <tr><td><code>IHttpClient</code></td><td><code>get(url) → HttpAntwort</code></td><td><code>LiveHttpClient</code> (HTTPS), <code>CachingHttpClient</code> (decorator), <code>FakeHttpClient</code> (tests)</td></tr>
+          <tr><td><code>IPriceSource</code></td><td><code>ladeKurse(wertpapier) → Kursreihe</code></td><td><code>AlphaVantageQuelle</code>, <code>TwelveDataQuelle</code>, <code>DateiQuelle</code>, <code>LiveKursquelle</code>, <code>SynchronisierteQuelle</code></td></tr>
+          <tr><td><code>IRateSource</code></td><td><code>ladeEntscheidungen(bank)</code></td><td><code>FredQuelle</code>, <code>DateiZinsquelle</code></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Errors have names</h3>
+      <p>Every failure becomes a subclass of <code>QuellenFehler</code>, so the caller can react to the kind of problem:</p>
+<pre><code>QuellenFehler
+├── NetzwerkFehler
+│   └── ZeitueberschreitungFehler   timeout
+├── HttpFehler                      401 bad key, 404 unknown symbol, …
+├── KontingentFehler                429 / quota used up
+├── ParseFehler                     invalid JSON, missing field
+└── KonfigurationsFehler            missing API key, reported before the first request</code></pre>
+
+      <div class="two">
+        <div>
+          <h3>Providers</h3>
+          <ul class="plain">
+            <li><strong>Alpha Vantage</strong> for all six securities (global symbols with exchange suffix like <code>.DEX</code>). Key: <code>ALPHAVANTAGE_API_KEY</code>. About 25 free calls a day.</li>
+            <li><strong>Twelve Data</strong> for IBM and AAPL (F3). Key: <code>TWELVEDATA_API_KEY</code>. About 800 free calls a day.</li>
+            <li>Each provider has a <code>parse</code> function (JSON → <code>Kursreihe</code>) and a <code>bewerte</code> function that tells the cache whether an answer is good, an error, or a quota hit, since both providers sometimes send errors with status 200.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Interest rates from FRED</h3>
+          <p>FRED has no list of “decisions”. It has the policy rate for every day (series <code>DFEDTARU</code> for the Fed, <code>ECBDFR</code> for the ECB). <code>FredQuelle::leiteEntscheidungenAb</code> creates one decision for every day the rate <em>changes</em>, one per country of the bank. Unchanged-rate meetings are invisible in this data, and the first day never counts.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Cache -->
+    <article class="chapter" id="c-cache">
+      <header><span class="eyebrow">E7</span><h2>Disk cache for API answers</h2><span class="dod">src/http_cache.cpp · src/uhr.hpp</span></header>
+      <p><code>CachingHttpClient</code> wraps another <code>IHttpClient</code> (decorator pattern). For each URL it keeps a file with the answer and the time it was fetched.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Situation</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td>Entry exists and is fresh</td><td>Return it. No network call.</td></tr>
+          <tr><td>Entry missing or expired</td><td>Fetch again; store only if the provider’s <code>bewerte</code> says the answer is good.</td></tr>
+          <tr><td>File corrupt or incomplete</td><td>Ignore it and fetch again instead of crashing.</td></tr>
+          <tr><td>Network down or quota used up</td><td>Return the old entry, even if expired, marked <code>veraltet: true</code> with a <code>hinweis</code> text. The UI shows this as a yellow note.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Expiry: 12 h for Alpha Vantage (25 calls a day for 6 securities means at most 12 calls a day), 1 h for Twelve Data. <code>--gueltigkeit</code> overrides it (1–168 h). Time comes from an <code>IUhr</code> interface; tests use a <code>FakeUhr</code> to jump 13 hours forward without waiting.</p>
+    </article>
+
+    <!-- Trend -->
+    <article class="chapter" id="c-trend">
+      <header><span class="eyebrow">E3</span><h2>Trend and momentum indicators</h2><span class="dod">src/trendindikatoren.cpp · class Trendindikatoren</span></header>
+      <p>Each indicator returns an <code>Indikatorreihe</code> = <code>std::vector&lt;std::optional&lt;double&gt;&gt;</code>, one value per candle. Values before the warm-up period ends are <code>nullopt</code> (“not available”), so the chart can leave them out instead of drawing fake numbers.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Indicator</th><th>Default</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>SMA</td><td class="num">20</td><td>Average close of the last <i>n</i> days.</td></tr>
+          <tr><td>EMA</td><td class="num">20</td><td>Average that weights recent days more: α = 2 / (n + 1), started with the SMA.</td></tr>
+          <tr><td>MACD</td><td class="num">12,26,9</td><td>Line = EMA(12) − EMA(26); signal = EMA(9) of the line; histogram = line − signal.</td></tr>
+          <tr><td>RSI</td><td class="num">14</td><td>Wilder’s RSI: 100 − 100 / (1 + avg gain / avg loss), between 0 and 100.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Period ≤ 0, a series that is too short, or MACD with fast ≥ slow are rejected with an error. Tests compare against values calculated by hand; the calculation is written in the test comment.</p>
+    </article>
+
+    <!-- Risk -->
+    <article class="chapter" id="c-risk">
+      <header><span class="eyebrow">E4</span><h2>Volatility and risk</h2><span class="dod">src/risikokennzahlen.cpp · class Risikokennzahlen</span></header>
+<div class="formula">Bollinger      middle = SMA(20),  upper/lower = middle ± 2 · σ(20)
+ATR(14)        Wilder average of true range = max(H−L, |H−C₋₁|, |L−C₋₁|)
+simple return  rₜ = Cₜ / Cₜ₋₁ − 1
+log return     rₜ = ln(Cₜ / Cₜ₋₁)
+volatility     stdev(log returns) · √252          (252 trading days a year)
+max drawdown   largest fall from a running peak, e.g. 120 → 90 = −25 %</div>
+      <p>Special cases are defined: constant prices give volatility 0 and drawdown 0; a series with one candle has no returns and volatility is “not available” instead of an error.</p>
+    </article>
+
+    <!-- S/R -->
+    <article class="chapter" id="c-sr">
+      <header><span class="eyebrow">E5</span><h2>Support, resistance and pivot points</h2><span class="dod">src/supportresistance.cpp · class SupportResistance</span></header>
+      <ol class="steps">
+        <li><strong>Find local highs and lows.</strong><p>A day is a local high if its high is the largest within <code>fenster</code> days on each side (default 5). Edges without a full window are skipped; on a flat plateau only the first day counts.</p></li>
+        <li><strong>Group nearby prices.</strong><p>Prices within a relative tolerance (default 2 %) are merged into one level. The number of merged points is the level’s touch count: more touches means a stronger level.</p></li>
+        <li><strong>Classify and sort.</strong><p>Below the last close is <span class="up">support</span>, above is <span class="down">resistance</span>. The list is sorted ascending.</p></li>
+      </ol>
+      <p>Classic pivot points from the last candle:</p>
+<div class="formula">P  = (H + L + C) / 3
+R1 = 2P − L        S1 = 2P − H
+R2 = P + (H − L)   S2 = P − (H − L)</div>
+    </article>
+
+    <!-- Event study -->
+    <article class="chapter" id="c-event">
+      <header><span class="eyebrow">E6</span><h2>Event study: price reaction to rate decisions</h2><span class="dod">src/ereignisstudie.cpp · class Ereignisstudie</span></header>
+      <p>Question: how did this stock move on the trading day after its central bank changed rates?</p>
+      <ul class="plain">
+        <li>Only decisions whose country equals the stock’s country count (MBG.DEX → ECB, IBM → Fed).</li>
+        <li><strong>Reaction day</strong> = first trading day <em>after</em> the decision. A decision on a weekend or holiday maps to the next trading day.</li>
+        <li><strong>Change</strong> = close on reaction day / close on the trading day before − 1.</li>
+        <li>Decisions outside the price history are skipped. A stock with no matching central bank (UK, Canada, India in the current catalog) gets an empty list, not an error.</li>
+      </ul>
+      <p>Each result is an <code>Ereignis</code>: the decision, reaction day, price before, price after and the change.</p>
+    </article>
+
+    <!-- API -->
+    <article class="chapter" id="c-api">
+      <header><span class="eyebrow">E8</span><h2>The HTTP JSON API</h2><span class="dod">src/anfragebehandlung.cpp · class Anfragebehandlung</span></header>
+      <p><code>Anfragebehandlung::behandle(const Anfrage&amp;) → Antwort</code> is a plain function from request to response. It never touches a socket, so it is tested directly.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Endpoint</th><th>Parameters (default)</th><th>Returns</th></tr></thead>
+        <tbody>
+          <tr><td><code>/api/wertpapiere</code></td><td>none</td><td>catalog list for this server’s provider</td></tr>
+          <tr><td><code>/api/kurse</code></td><td><code>symbol</code>, optional <code>von</code>, <code>bis</code> (YYYY-MM-DD)</td><td>candles, plus <code>veraltet</code> and <code>hinweis</code></td></tr>
+          <tr><td><code>/api/indikatoren</code></td><td><code>symbol</code>, <code>von</code>, <code>bis</code>, <code>sma</code> (20), <code>ema</code> (20), <code>rsi</code> (14), <code>atr</code> (14), <code>macd</code> (12,26,9), <code>bollinger</code> (20,2), <code>fenster</code> (5), <code>toleranz</code> (0.02)</td><td>all indicators, risk figures, levels, pivots</td></tr>
+          <tr><td><code>/api/ereignisstudie</code></td><td><code>symbol</code>, <code>von</code>, <code>bis</code></td><td>list of events</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Status</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td class="num">400</td><td>missing <code>symbol</code>, unknown parameter, non-numeric period, bad date, <code>von</code> after <code>bis</code>, MACD fast ≥ slow</td></tr>
+          <tr><td class="num">404</td><td>unknown symbol or unknown path</td></tr>
+          <tr><td class="num">405</td><td>method other than GET</td></tr>
+          <tr><td class="num">5xx</td><td>the data source failed (network, quota, parse). These answers are not cached.</td></tr>
+        </tbody>
+      </table></div>
+<pre><code>GET /api/indikatoren?symbol=IBM&amp;macd=12,26
+→ 400 {"fehler": "parameter 'macd' must be 'fast,slow,signal', e.g. '12,26,9'"}</code></pre>
+    </article>
+
+    <!-- Concurrency -->
+    <article class="chapter" id="c-conc">
+      <header><span class="eyebrow">E9</span><h2>Concurrency: thread pool and shared cache</h2><span class="dod">src/threadpool.cpp · src/ergebnis_cache.cpp · src/synchronisierte_quelle.hpp</span></header>
+      <div class="two">
+        <div>
+          <h3><code>ThreadPool</code></h3>
+          <p>A fixed number of worker threads (default: number of CPU cores, <code>--threads N</code> to change) take jobs from a queue. <code>beende()</code> lets running jobs finish and joins every thread, so nothing hangs on shutdown.</p>
+        </div>
+        <div>
+          <h3><code>ErgebnisCache</code></h3>
+          <p>The cache key is path + sorted parameters. When a calculation <em>starts</em>, a <code>std::shared_future</code> is stored under the key. A second thread asking the same thing finds the future and waits for it instead of computing again. One <code>std::mutex</code> protects the map; the slow work runs outside the lock.</p>
+        </div>
+      </div>
+      <div class="note">Result: answers are identical to a sequential run, whatever the number or order of requests, and identical requests are computed once. A stress test with a fixed random seed checks this within a time limit.</div>
+      <p><strong>Clean shutdown.</strong> Before any thread starts, <code>main</code> blocks SIGINT and SIGTERM for all threads. A dedicated signal thread waits in <code>sigwait()</code>; on Ctrl+C it calls <code>server.stoppe()</code>. This runs as normal code, not inside a signal handler, where almost nothing is allowed.</p>
+    </article>
+
+    <!-- Web -->
+    <article class="chapter" id="c-web">
+      <header><span class="eyebrow">E10 · F1 · F2 · F3</span><h2>The web interface</h2><span class="dod">web/index.html · app.js · zeichnen.js · erklaerungen.js · style.css</span></header>
+      <p>About 2,000 lines of plain JavaScript, no libraries and no CDN. The chart is drawn by the page itself. It works with no external service.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>File</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td><code>app.js</code></td><td>loads the list, calls the API, draws candles, SMA/EMA, Bollinger, levels, pivots, rate-decision markers, RSI and MACD panels; shows API errors and stale-data notes</td></tr>
+          <tr><td><code>zeichnen.js</code> (F1)</td><td>drawing tools: trend line, ray, horizontal line, zone, Fibonacci; a magnet snaps to open/high/low/close</td></tr>
+          <tr><td><code>erklaerungen.js</code> (F2)</td><td>the “?” buttons: a plain explanation for every number and indicator</td></tr>
+        </tbody>
+      </table></div>
+      <p>Indicator on/off switches apply at once; changed periods apply after “Anzeigen”. With F3 two servers can run side by side: port 8080 with Alpha Vantage (6 securities) and port 8081 with Twelve Data (IBM, AAPL). The header shows which provider a page uses.</p>
+    </article>
+
+    <!-- Run -->
+    <article class="chapter" id="c-run">
+      <header><span class="eyebrow">main.cpp</span><h2>Running it</h2></header>
+<pre><code># offline (default): saved answers from daten/alphavantage/
+./build/projekt
+
+# second server with Twelve Data, side by side (F3)
+./build/projekt --quelle twelvedata --port 8081
+
+# live (F5): needs the HTTPS build and an API key in the environment
+cmake -B build-live -DMARKETLENS_LIVE_HTTP=ON && cmake --build build-live
+ALPHAVANTAGE_API_KEY=… ./build-live/projekt --live</code></pre>
+      <div class="tbl"><table>
+        <thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>--host</code></td><td><code>127.0.0.1</code></td><td>use <code>0.0.0.0</code> inside the container</td></tr>
+          <tr><td><code>--port</code></td><td class="num">8080</td><td>1–65535</td></tr>
+          <tr><td><code>--quelle</code></td><td><code>alphavantage</code></td><td>or <code>twelvedata</code></td></tr>
+          <tr><td><code>--katalog</code></td><td><code>config/katalog.json</code></td><td>catalog file</td></tr>
+          <tr><td><code>--daten</code></td><td><code>daten/&lt;quelle&gt;</code></td><td>offline only</td></tr>
+          <tr><td><code>--zinsen</code></td><td><code>daten/zinsen</code></td><td>saved FRED answers</td></tr>
+          <tr><td><code>--web</code></td><td><code>web</code></td><td>folder of the UI</td></tr>
+          <tr><td><code>--threads</code></td><td>CPU cores</td><td>1–256</td></tr>
+          <tr><td><code>--live</code></td><td>off</td><td>fetch from the provider; can’t be combined with <code>--daten</code></td></tr>
+          <tr><td><code>--cache</code></td><td><code>cache/&lt;quelle&gt;</code></td><td>live only</td></tr>
+          <tr><td><code>--gueltigkeit</code></td><td>12 h / 1 h</td><td>live only, 1–168 hours</td></tr>
+        </tbody>
+      </table></div>
+      <p>Options that don’t fit together are rejected at startup with a clear message, for example <code>--live</code> in a build without OpenSSL.</p>
+    </article>
+
+    <!-- Testing -->
+    <article class="chapter" id="c-test">
+      <header><span class="eyebrow">Quality</span><h2>Testing</h2><span class="dod">tests/ · 224 GoogleTest cases</span></header>
+      <ul class="plain">
+        <li>One <code>test_*.cpp</code> per module. All logic lives in the library <code>projekt_lib</code>, so tests run without <code>main</code>.</li>
+        <li><code>FakeHttpClient</code> replays recorded real answers from <code>tests/fixtures/</code> (Alpha Vantage, Twelve Data, FRED), plus small hand-written broken ones: invalid JSON, missing field, error 401/404/429, inconsistent candle, duplicate date.</li>
+        <li><code>FakeUhr</code> makes cache expiry testable without waiting.</li>
+        <li>The default build has no network and needs no extra libraries. Live HTTPS is a CMake option, checked by a manual test protocol (<code>docs/testprotokoll.md</code>).</li>
+        <li>A pre-commit hook builds and runs all tests before every commit.</li>
+      </ul>
+    </article>
+
+    <!-- Files -->
+    <article class="chapter" id="c-files">
+      <header><span class="eyebrow">Reference</span><h2>File map</h2></header>
+      <div class="tbl"><table>
+        <thead><tr><th>Area</th><th>Files in <code>src/</code></th></tr></thead>
+        <tbody>
+          <tr><td>Data model</td><td><code>kursdaten</code>, <code>zinsentscheidung</code>, <code>zentralbank</code>, <code>katalog</code></td></tr>
+          <tr><td>Interfaces &amp; errors</td><td><code>http_client</code>, <code>price_source</code>, <code>rate_source</code>, <code>quellenfehler</code>, <code>uhr</code>, <code>umgebung</code></td></tr>
+          <tr><td>Providers</td><td><code>alphavantage_quelle</code>, <code>twelvedata_quelle</code>, <code>fred_quelle</code>, <code>dateiquelle</code>, <code>datei_zinsquelle</code>, <code>live_kursquelle</code>, <code>live_http_client</code>, <code>http_cache</code></td></tr>
+          <tr><td>Loading helpers</td><td><code>kursabruf</code>, <code>zinsabruf</code></td></tr>
+          <tr><td>Analysis</td><td><code>trendindikatoren</code>, <code>risikokennzahlen</code>, <code>supportresistance</code>, <code>ereignisstudie</code>, <code>statistik</code></td></tr>
+          <tr><td>Server</td><td><code>anfrage</code>, <code>anfrage_behandler</code>, <code>anfragebehandlung</code>, <code>gecachte_anfragebehandlung</code>, <code>ergebnis_cache</code>, <code>synchronisierte_quelle</code>, <code>threadpool</code>, <code>http_server</code>, <code>main</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>Other folders: <code>web/</code> UI, <code>config/</code> catalog, <code>daten/</code> saved answers, <code>tests/fixtures/</code>, <code>docs/</code> one explanation per feature, <code>Features/</code> feature specs, <code>third_party/</code> nlohmann/json and cpp-httplib (header-only).</p>
+    </article>
+  </section>
+
+  <footer>Written from the code on branch <code>live-zugriff</code> (commit a93131f), 25 Nov 2026.</footer>
+</div>
+
+<script>
+(function () {
+  var views = { overview: document.getElementById('view-overview'), 'in-depth': document.getElementById('view-in-depth') };
+  function show() {
+    var h = (location.hash || '').slice(1);
+    var name = views[h] ? h : 'overview';
+    Object.keys(views).forEach(function (k) {
+      views[k].hidden = k !== name;
+      var tab = document.getElementById('tab-' + k);
+      if (k === name) tab.setAttribute('aria-current', 'page'); else tab.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', function () { show(); window.scrollTo(0, 0); });
+  show();
+  // Chapter links: stay on the in-depth view and scroll to the chapter
+  document.querySelectorAll('[data-jump]').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      var el = document.getElementById(a.getAttribute('data-jump'));
+      if (el) el.scrollIntoView();
+    });
+  });
+})();
+</script>

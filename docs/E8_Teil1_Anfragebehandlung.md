@@ -23,10 +23,10 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/anfrage.hpp` | `Anfrage` (method, path, parameters) and `Antwort` (status, content type, body) |
-| `src/anfragebehandlung.hpp` / `.cpp` | class `Anfragebehandlung` with all endpoints |
-| `src/price_source.hpp` | **changed:** new `Kursdaten` and `IPriceSource::ladeKursdaten` (see section 6) |
-| `src/alphavantage_quelle.hpp` / `.cpp` | **changed:** overrides `ladeKursdaten`, passes the cache notice on |
+| `src/server/anfrage.hpp` | `Anfrage` (method, path, parameters) and `Antwort` (status, content type, body) |
+| `src/server/anfragebehandlung.hpp` / `.cpp` | class `Anfragebehandlung` with all endpoints |
+| `src/quellen/price_source.hpp` | **changed:** new `Kursdaten` and `IPriceSource::ladeKursdaten` (see section 6) |
+| `src/quellen/alphavantage_quelle.hpp` / `.cpp` | **changed:** overrides `ladeKursdaten`, passes the cache notice on |
 | `tests/test_anfragebehandlung.cpp` | 15 tests |
 | `CMakeLists.txt` | new `.cpp` and test file; tests may include `nlohmann/json` to read the answers |
 

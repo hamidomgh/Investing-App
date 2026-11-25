@@ -23,12 +23,12 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/threadpool.hpp` / `.cpp` | `ThreadPool`: fixed number of worker threads and a task queue |
-| `src/ergebnis_cache.hpp` / `.cpp` | `ErgebnisCache`: thread-safe, computes each key at most once at a time |
-| `src/anfrage_behandler.hpp` | interface `IAnfrageBehandler` ("turns an `Anfrage` into an `Antwort`") |
-| `src/gecachte_anfragebehandlung.hpp` / `.cpp` | decorator: asks the cache first, only then the real handler |
-| `src/synchronisierte_quelle.hpp` | decorator: lets only one thread at a time into a price source |
-| `src/anfragebehandlung.hpp` | **changed:** now implements `IAnfrageBehandler` (`override`), comment on thread safety |
+| `src/server/threadpool.hpp` / `.cpp` | `ThreadPool`: fixed number of worker threads and a task queue |
+| `src/server/ergebnis_cache.hpp` / `.cpp` | `ErgebnisCache`: thread-safe, computes each key at most once at a time |
+| `src/server/anfrage_behandler.hpp` | interface `IAnfrageBehandler` ("turns an `Anfrage` into an `Antwort`") |
+| `src/server/gecachte_anfragebehandlung.hpp` / `.cpp` | decorator: asks the cache first, only then the real handler |
+| `src/quellen/synchronisierte_quelle.hpp` | decorator: lets only one thread at a time into a price source |
+| `src/server/anfragebehandlung.hpp` | **changed:** now implements `IAnfrageBehandler` (`override`), comment on thread safety |
 | `tests/test_nebenlaeufigkeit.cpp` | 17 tests, including the stress test |
 | `CMakeLists.txt` | new files; **every test now has a 60 s timeout** (a deadlock fails instead of hanging forever) |
 

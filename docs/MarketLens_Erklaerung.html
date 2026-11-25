@@ -246,7 +246,7 @@ cmake -B build && cmake --build build \
 
     <!-- Data model -->
     <article class="chapter" id="c-model">
-      <header><span class="eyebrow">E1</span><h2>Data model with validation</h2><span class="dod">src/kursdaten.hpp · src/zinsentscheidung.hpp · src/zentralbank.hpp</span></header>
+      <header><span class="eyebrow">E1</span><h2>Data model with validation</h2><span class="dod">src/modell/kursdaten.hpp · src/modell/zinsentscheidung.hpp · src/modell/zentralbank.hpp</span></header>
       <div class="tbl"><table>
         <thead><tr><th>Type</th><th>Holds</th><th>Rejects</th></tr></thead>
         <tbody>
@@ -262,7 +262,7 @@ cmake -B build && cmake --build build \
 
     <!-- Catalog -->
     <article class="chapter" id="c-catalog">
-      <header><span class="eyebrow">E2 · part 3</span><h2>The catalog</h2><span class="dod">config/katalog.json · src/katalog.cpp</span></header>
+      <header><span class="eyebrow">E2 · part 3</span><h2>The catalog</h2><span class="dod">config/katalog.json · src/modell/katalog.cpp</span></header>
       <p>“All countries” is handled with data, not code. Each security lists which providers know it and under which symbol. Twelve Data’s free plan only covers US stocks, so only IBM and AAPL have a <code>twelvedata</code> symbol.</p>
 <pre><code>{ "symbol": "MBG.DEX", "name": "Mercedes-Benz Group AG",
   "land": "Deutschland", "waehrung": "EUR",
@@ -280,7 +280,7 @@ cmake -B build && cmake --build build \
 
     <!-- Sources -->
     <article class="chapter" id="c-sources">
-      <header><span class="eyebrow">E2 · E6 · F3 · F5</span><h2>Data sources behind interfaces</h2><span class="dod">src/http_client.hpp · src/price_source.hpp · src/rate_source.hpp</span></header>
+      <header><span class="eyebrow">E2 · E6 · F3 · F5</span><h2>Data sources behind interfaces</h2><span class="dod">src/http/http_client.hpp · src/quellen/price_source.hpp · src/quellen/rate_source.hpp</span></header>
       <p>Three small interfaces hide the network. Tests swap in fakes; the real program plugs in real classes.</p>
       <div class="tbl"><table>
         <thead><tr><th>Interface</th><th>Method</th><th>Implementations</th></tr></thead>
@@ -319,7 +319,7 @@ cmake -B build && cmake --build build \
 
     <!-- Cache -->
     <article class="chapter" id="c-cache">
-      <header><span class="eyebrow">E7</span><h2>Disk cache for API answers</h2><span class="dod">src/http_cache.cpp · src/uhr.hpp</span></header>
+      <header><span class="eyebrow">E7</span><h2>Disk cache for API answers</h2><span class="dod">src/http/http_cache.cpp · src/basis/uhr.hpp</span></header>
       <p><code>CachingHttpClient</code> wraps another <code>IHttpClient</code> (decorator pattern). For each URL it keeps a file with the answer and the time it was fetched.</p>
       <div class="tbl"><table>
         <thead><tr><th>Situation</th><th>What happens</th></tr></thead>
@@ -335,7 +335,7 @@ cmake -B build && cmake --build build \
 
     <!-- Trend -->
     <article class="chapter" id="c-trend">
-      <header><span class="eyebrow">E3</span><h2>Trend and momentum indicators</h2><span class="dod">src/trendindikatoren.cpp · class Trendindikatoren</span></header>
+      <header><span class="eyebrow">E3</span><h2>Trend and momentum indicators</h2><span class="dod">src/analyse/trendindikatoren.cpp · class Trendindikatoren</span></header>
       <p>Each indicator returns an <code>Indikatorreihe</code> = <code>std::vector&lt;std::optional&lt;double&gt;&gt;</code>, one value per candle. Values before the warm-up period ends are <code>nullopt</code> (“not available”), so the chart can leave them out instead of drawing fake numbers.</p>
       <div class="tbl"><table>
         <thead><tr><th>Indicator</th><th>Default</th><th>What it does</th></tr></thead>
@@ -351,7 +351,7 @@ cmake -B build && cmake --build build \
 
     <!-- Risk -->
     <article class="chapter" id="c-risk">
-      <header><span class="eyebrow">E4</span><h2>Volatility and risk</h2><span class="dod">src/risikokennzahlen.cpp · class Risikokennzahlen</span></header>
+      <header><span class="eyebrow">E4</span><h2>Volatility and risk</h2><span class="dod">src/analyse/risikokennzahlen.cpp · class Risikokennzahlen</span></header>
 <div class="formula">Bollinger      middle = SMA(20),  upper/lower = middle ± 2 · σ(20)
 ATR(14)        Wilder average of true range = max(H−L, |H−C₋₁|, |L−C₋₁|)
 simple return  rₜ = Cₜ / Cₜ₋₁ − 1
@@ -363,7 +363,7 @@ max drawdown   largest fall from a running peak, e.g. 120 → 90 = −25 %</div>
 
     <!-- S/R -->
     <article class="chapter" id="c-sr">
-      <header><span class="eyebrow">E5</span><h2>Support, resistance and pivot points</h2><span class="dod">src/supportresistance.cpp · class SupportResistance</span></header>
+      <header><span class="eyebrow">E5</span><h2>Support, resistance and pivot points</h2><span class="dod">src/analyse/supportresistance.cpp · class SupportResistance</span></header>
       <ol class="steps">
         <li><strong>Find local highs and lows.</strong><p>A day is a local high if its high is the largest within <code>fenster</code> days on each side (default 5). Edges without a full window are skipped; on a flat plateau only the first day counts.</p></li>
         <li><strong>Group nearby prices.</strong><p>Prices within a relative tolerance (default 2 %) are merged into one level. The number of merged points is the level’s touch count: more touches means a stronger level.</p></li>
@@ -377,7 +377,7 @@ R2 = P + (H − L)   S2 = P − (H − L)</div>
 
     <!-- Event study -->
     <article class="chapter" id="c-event">
-      <header><span class="eyebrow">E6</span><h2>Event study: price reaction to rate decisions</h2><span class="dod">src/ereignisstudie.cpp · class Ereignisstudie</span></header>
+      <header><span class="eyebrow">E6</span><h2>Event study: price reaction to rate decisions</h2><span class="dod">src/analyse/ereignisstudie.cpp · class Ereignisstudie</span></header>
       <p>Question: how did this stock move on the trading day after its central bank changed rates?</p>
       <ul class="plain">
         <li>Only decisions whose country equals the stock’s country count (MBG.DEX → ECB, IBM → Fed).</li>
@@ -390,7 +390,7 @@ R2 = P + (H − L)   S2 = P − (H − L)</div>
 
     <!-- API -->
     <article class="chapter" id="c-api">
-      <header><span class="eyebrow">E8</span><h2>The HTTP JSON API</h2><span class="dod">src/anfragebehandlung.cpp · class Anfragebehandlung</span></header>
+      <header><span class="eyebrow">E8</span><h2>The HTTP JSON API</h2><span class="dod">src/server/anfragebehandlung.cpp · class Anfragebehandlung</span></header>
       <p><code>Anfragebehandlung::behandle(const Anfrage&amp;) → Antwort</code> is a plain function from request to response. It never touches a socket, so it is tested directly.</p>
       <div class="tbl"><table>
         <thead><tr><th>Endpoint</th><th>Parameters (default)</th><th>Returns</th></tr></thead>
@@ -416,7 +416,7 @@ R2 = P + (H − L)   S2 = P − (H − L)</div>
 
     <!-- Concurrency -->
     <article class="chapter" id="c-conc">
-      <header><span class="eyebrow">E9</span><h2>Concurrency: thread pool and shared cache</h2><span class="dod">src/threadpool.cpp · src/ergebnis_cache.cpp · src/synchronisierte_quelle.hpp</span></header>
+      <header><span class="eyebrow">E9</span><h2>Concurrency: thread pool and shared cache</h2><span class="dod">src/server/threadpool.cpp · src/server/ergebnis_cache.cpp · src/quellen/synchronisierte_quelle.hpp</span></header>
       <div class="two">
         <div>
           <h3><code>ThreadPool</code></h3>

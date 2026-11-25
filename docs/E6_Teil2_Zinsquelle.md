@@ -36,13 +36,13 @@ in the series.
 
 | File | Purpose |
 |---|---|
-| `src/zentralbank.hpp` / `.cpp` | `Zentralbank`: name, **list of countries**, currency, FRED series; validating constructor |
-| `src/rate_source.hpp` | interface `IRateSource` (counterpart of `IPriceSource`) |
-| `src/fred_quelle.hpp` / `.cpp` | `FredQuelle`: URL, errors, reading the daily values, deriving decisions, cache rating (E7) |
-| `src/datei_zinsquelle.hpp` / `.cpp` | `DateiZinsquelle`: offline, reads `daten/zinsen/<SERIES>.json` |
-| `src/zinsabruf.hpp` / `.cpp` | `ladeAlleEntscheidungen`: one faulty bank doesn't stop the others |
-| `src/katalog.hpp` / `.cpp` | **extended:** optional section `"zentralbanken"`, `zentralbanken()`, `zentralbankFehler()` |
-| `src/anfragebehandlung.cpp` | **extended:** `"datumsart": "wirksam"` in `/api/ereignisstudie` |
+| `src/modell/zentralbank.hpp` / `.cpp` | `Zentralbank`: name, **list of countries**, currency, FRED series; validating constructor |
+| `src/quellen/rate_source.hpp` | interface `IRateSource` (counterpart of `IPriceSource`) |
+| `src/quellen/fred_quelle.hpp` / `.cpp` | `FredQuelle`: URL, errors, reading the daily values, deriving decisions, cache rating (E7) |
+| `src/quellen/datei_zinsquelle.hpp` / `.cpp` | `DateiZinsquelle`: offline, reads `daten/zinsen/<SERIES>.json` |
+| `src/quellen/zinsabruf.hpp` / `.cpp` | `ladeAlleEntscheidungen`: one faulty bank doesn't stop the others |
+| `src/modell/katalog.hpp` / `.cpp` | **extended:** optional section `"zentralbanken"`, `zentralbanken()`, `zentralbankFehler()` |
+| `src/server/anfragebehandlung.cpp` | **extended:** `"datumsart": "wirksam"` in `/api/ereignisstudie` |
 | `src/main.cpp` | **extended:** loads all rates at start (`--zinsen ORDNER`, default `daten/zinsen`) |
 | `config/katalog.json` | **extended:** Fed (USA) and ECB (21 euro countries) |
 | `daten/zinsen/README.md` | how to record the two real FRED answers |

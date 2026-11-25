@@ -32,12 +32,12 @@ So the Twelve Data server only offers the US securities (IBM, AAPL).
 
 | File | Change |
 |---|---|
-| `src/twelvedata_quelle.hpp` / `.cpp` | **new**: `TwelveDataQuelle : IPriceSource` |
-| `src/kursdaten.hpp` / `.cpp` | `Wertpapier` gets the optional `symbole` (symbol per provider), `bietet()`, `symbolFuer()` |
-| `src/katalog.hpp` / `.cpp` | reads `symbole`; `fuerAnbieter(name)` filters the securities of a provider |
-| `src/alphavantage_quelle.cpp` | **one line**: asks for `symbolFuer("alphavantage")` (= `symbol` when there's no `symbole`) |
-| `src/dateiquelle.hpp` / `.cpp` | parser as a parameter (default: Alpha Vantage format) |
-| `src/anfragebehandlung.hpp` / `.cpp` | optional provider name; field `anbieter` in every successful answer |
+| `src/quellen/twelvedata_quelle.hpp` / `.cpp` | **new**: `TwelveDataQuelle : IPriceSource` |
+| `src/modell/kursdaten.hpp` / `.cpp` | `Wertpapier` gets the optional `symbole` (symbol per provider), `bietet()`, `symbolFuer()` |
+| `src/modell/katalog.hpp` / `.cpp` | reads `symbole`; `fuerAnbieter(name)` filters the securities of a provider |
+| `src/quellen/alphavantage_quelle.cpp` | **one line**: asks for `symbolFuer("alphavantage")` (= `symbol` when there's no `symbole`) |
+| `src/quellen/dateiquelle.hpp` / `.cpp` | parser as a parameter (default: Alpha Vantage format) |
+| `src/server/anfragebehandlung.hpp` / `.cpp` | optional provider name; field `anbieter` in every successful answer |
 | `src/main.cpp` | option `--quelle alphavantage\|twelvedata`; default data folder `daten/<provider>`; catalog filtered |
 | `config/katalog.json` | `symbole` for all 6; only IBM and AAPL have `twelvedata` |
 | `daten/` | Alpha Vantage files moved to `daten/alphavantage/` (Git shows renames); new `daten/twelvedata/` (your recordings); `daten/README.md` overview |

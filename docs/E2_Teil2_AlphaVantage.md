@@ -24,7 +24,7 @@ The code comments are in German (like the rest of the project); this text is in 
 |---|---|
 | `third_party/nlohmann/json.hpp` | JSON library, version 3.11.3, unchanged |
 | `third_party/README.md` | version, licence (MIT), source URL and SHA-256 of the header |
-| `src/alphavantage_quelle.hpp` / `.cpp` | class `AlphaVantageQuelle : IPriceSource` |
+| `src/quellen/alphavantage_quelle.hpp` / `.cpp` | class `AlphaVantageQuelle : IPriceSource` |
 | `tests/fixtures/alphavantage/*.json` | 11 hand-written answers (one valid, ten error cases) + `README.md` |
 | `tests/test_alphavantage.cpp` | 13 tests |
 | `CMakeLists.txt` | new `.cpp`, include path for `third_party/`, `FIXTURES_DIR`, new test file |

@@ -36,8 +36,8 @@ the **real HTTPS client** behind a CMake option (cpp-httplib + OpenSSL), and a m
 | File | Purpose |
 |---|---|
 | `config/katalog.json` | the real catalog: 6 securities from 5 countries |
-| `src/katalog.hpp` / `.cpp` | class `Katalog`, struct `KatalogFehler` |
-| `src/kursabruf.hpp` / `.cpp` | function `ladeAlleKurse`, structs `GeladenesWertpapier`, `Ladefehler`, `Ladeergebnis` |
+| `src/modell/katalog.hpp` / `.cpp` | class `Katalog`, struct `KatalogFehler` |
+| `src/quellen/kursabruf.hpp` / `.cpp` | function `ladeAlleKurse`, structs `GeladenesWertpapier`, `Ladefehler`, `Ladeergebnis` |
 | `tests/fixtures/katalog/gemischt.json` | test catalog with 3 valid and 5 faulty entries |
 | `tests/test_katalog.cpp` | 8 tests |
 | `CMakeLists.txt` | two new `.cpp` files, new test file, constant `KONFIG_DIR` |

@@ -33,8 +33,8 @@ later an `IRateSource` only has to deliver that vector.
 
 | File | Purpose |
 |---|---|
-| `src/zinsentscheidung.hpp` / `.cpp` | Struct `Zinsentscheidung` with validating constructor |
-| `src/ereignisstudie.hpp` / `.cpp` | Struct `Ereignis`, class `Ereignisstudie` |
+| `src/modell/zinsentscheidung.hpp` / `.cpp` | Struct `Zinsentscheidung` with validating constructor |
+| `src/analyse/ereignisstudie.hpp` / `.cpp` | Struct `Ereignis`, class `Ereignisstudie` |
 | `tests/test_ereignisstudie.cpp` | 11 tests (3 for the data model, 8 for the event study) |
 | `CMakeLists.txt` | Both `.cpp` files added to `projekt_lib`, the test file to `tests` |
 

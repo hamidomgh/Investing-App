@@ -22,10 +22,10 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/uhr.hpp` | interface `IUhr`, real clock `SystemUhr` |
-| `src/http_cache.hpp` / `.cpp` | `CachingHttpClient`, `Antwortbewertung`, `standardBewertung` |
-| `src/http_client.hpp` | **changed:** `HttpAntwort` got `veraltet`, `hinweis` and two constructors |
-| `src/alphavantage_quelle.hpp` / `.cpp` | **changed:** new static function `bewerte` |
+| `src/basis/uhr.hpp` | interface `IUhr`, real clock `SystemUhr` |
+| `src/http/http_cache.hpp` / `.cpp` | `CachingHttpClient`, `Antwortbewertung`, `standardBewertung` |
+| `src/http/http_client.hpp` | **changed:** `HttpAntwort` got `veraltet`, `hinweis` and two constructors |
+| `src/quellen/alphavantage_quelle.hpp` / `.cpp` | **changed:** new static function `bewerte` |
 | `tests/fake_uhr.hpp` | `FakeUhr`: a clock the test sets and moves forward |
 | `tests/test_http_cache.cpp` | 18 tests |
 | `CMakeLists.txt` | new `.cpp` and test file |

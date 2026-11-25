@@ -21,7 +21,7 @@ the interface, **no source and no analysis code changes**. Part 2 will plug it i
 
 | File | Change |
 |---|---|
-| `src/live_http_client.hpp` / `.cpp` | **new**: `LiveHttpClient : IHttpClient` |
+| `src/http/live_http_client.hpp` / `.cpp` | **new**: `LiveHttpClient : IHttpClient` |
 | `tests/test_live_http_client.cpp` | **new**: 8 tests against a local test server |
 | `CMakeLists.txt` | client added to `projekt_server`; new option `MARKETLENS_LIVE_HTTP` (default OFF) |
 | `container/Containerfile` | `libssl-dev` (OpenSSL headers) added |

@@ -20,8 +20,8 @@ and rate decisions for the event study (FRED source, E6).
 |---|---|
 | `third_party/httplib.h` | cpp-httplib 0.18.3, header-only, MIT, unchanged |
 | `third_party/README.md` | **changed:** version, source and SHA-256 of `httplib.h` |
-| `src/http_server.hpp` / `.cpp` | class `HttpServer`: the thin network layer |
-| `src/dateiquelle.hpp` / `.cpp` | class `DateiQuelle`: offline `IPriceSource` reading `daten/<SYMBOL>.json` |
+| `src/server/http_server.hpp` / `.cpp` | class `HttpServer`: the thin network layer |
+| `src/quellen/dateiquelle.hpp` / `.cpp` | class `DateiQuelle`: offline `IPriceSource` reading `daten/<SYMBOL>.json` |
 | `src/main.cpp` | **replaced:** starts the MarketLens server (was the `Statistik` demo of the template) |
 | `daten/IBM.json`, `daten/README.md` | offline data: your recorded IBM answer, and how to add more |
 | `tests/test_dateiquelle.cpp` | 4 tests |

@@ -20,7 +20,7 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Change |
 |---|---|
-| `src/http_server.hpp` / `.cpp` | takes an `IAnfrageBehandler&` and a number of threads; `binde`/`lausche`/`warteBisBereit`/`stoppe`; adapter `PoolWarteschlange`; socket options |
+| `src/server/http_server.hpp` / `.cpp` | takes an `IAnfrageBehandler&` and a number of threads; `binde`/`lausche`/`warteBisBereit`/`stoppe`; adapter `PoolWarteschlange`; socket options |
 | `src/main.cpp` | full chain from part 1, `--threads N`, signal thread for Ctrl+C / SIGTERM |
 | `CMakeLists.txt` | `http_server.cpp` is now its own library `projekt_server`, used by the program **and** the tests |
 | `tests/test_http_server.cpp` | 6 tests over real local sockets (`127.0.0.1`, free port, no internet) |

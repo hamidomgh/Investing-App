@@ -26,7 +26,7 @@ HttpServer → ErgebnisCache (5 min) → Anfragebehandlung → SynchronisierteQu
 
 | File | Change |
 |---|---|
-| `src/live_kursquelle.hpp` / `.cpp` | **new**: `LiveKursquelle : IPriceSource`, builds the chain for one provider |
+| `src/quellen/live_kursquelle.hpp` / `.cpp` | **new**: `LiveKursquelle : IPriceSource`, builds the chain for one provider |
 | `tests/test_live_kursquelle.cpp` | **new**: 7 tests with `FakeHttpClient` and `FakeUhr` |
 | `src/main.cpp` | options `--live`, `--cache`, `--gueltigkeit`; chooses offline or live source; start message |
 | `CMakeLists.txt` | new source and test file |

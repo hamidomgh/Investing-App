@@ -13,8 +13,8 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/risikokennzahlen.hpp` | Declaration: class `Risikokennzahlen`, struct `BollingerErgebnis` |
-| `src/risikokennzahlen.cpp` | Implementation of all six metrics |
+| `src/analyse/risikokennzahlen.hpp` | Declaration: class `Risikokennzahlen`, struct `BollingerErgebnis` |
+| `src/analyse/risikokennzahlen.cpp` | Implementation of all six metrics |
 | `tests/test_risikokennzahlen.cpp` | 14 tests with hand-calculated values, special cases and errors |
 | `CMakeLists.txt` | New `.cpp` added to `projekt_lib`, new test file to `tests` |
 

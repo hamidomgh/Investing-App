@@ -30,33 +30,41 @@ endif()
 # Programmlogik als Bibliothek: Programm und Tests nutzen denselben Code.
 # Neue .cpp-Dateien hier eintragen.
 add_library(projekt_lib
-    src/statistik.cpp
-    src/kursdaten.cpp
-    src/trendindikatoren.cpp
-    src/risikokennzahlen.cpp
-    src/supportresistance.cpp
-    src/zinsentscheidung.cpp
-    src/ereignisstudie.cpp
-    src/http_client.cpp
-    src/umgebung.cpp
-    src/alphavantage_quelle.cpp
-    src/twelvedata_quelle.cpp
-    src/katalog.cpp
-    src/kursabruf.cpp
-    src/http_cache.cpp
-    src/anfragebehandlung.cpp
-    src/dateiquelle.cpp
-    src/threadpool.cpp
-    src/ergebnis_cache.cpp
-    src/gecachte_anfragebehandlung.cpp
-    src/zentralbank.cpp
-    src/fred_quelle.cpp
-    src/datei_zinsquelle.cpp
-    src/zinsabruf.cpp
-    src/live_kursquelle.cpp
+    src/analyse/statistik.cpp
+    src/modell/kursdaten.cpp
+    src/analyse/trendindikatoren.cpp
+    src/analyse/risikokennzahlen.cpp
+    src/analyse/supportresistance.cpp
+    src/modell/zinsentscheidung.cpp
+    src/analyse/ereignisstudie.cpp
+    src/http/http_client.cpp
+    src/basis/umgebung.cpp
+    src/quellen/alphavantage_quelle.cpp
+    src/quellen/twelvedata_quelle.cpp
+    src/modell/katalog.cpp
+    src/quellen/kursabruf.cpp
+    src/http/http_cache.cpp
+    src/server/anfragebehandlung.cpp
+    src/quellen/dateiquelle.cpp
+    src/server/threadpool.cpp
+    src/server/ergebnis_cache.cpp
+    src/server/gecachte_anfragebehandlung.cpp
+    src/modell/zentralbank.cpp
+    src/quellen/fred_quelle.cpp
+    src/quellen/datei_zinsquelle.cpp
+    src/quellen/zinsabruf.cpp
+    src/quellen/live_kursquelle.cpp
 )
-# Stellt sicher, dass Header-Dateien im src-Verzeichnis gefunden werden können
-target_include_directories(projekt_lib PUBLIC src)
+# Stellt sicher, dass Header-Dateien in src und seinen Unterordnern gefunden werden können.
+# So bleiben alle #include "datei.hpp" ohne Ordnerangabe gültig.
+#   modell/  Datenmodell (Kursdaten, Zentralbank, Zinsentscheidung, Katalog)
+#   analyse/ Berechnungen (Indikatoren, Risiko, Support/Resistance, Ereignisstudie)
+#   quellen/ Datenquellen (Schnittstellen, Anbieter, Dateiquellen, Abruf)
+#   http/    HTTP-Client und Festplatten-Cache
+#   server/  Anfragebehandlung, Ergebnis-Cache, ThreadPool, HTTP-Server
+#   basis/   Hilfen (Uhr, Umgebungsvariablen)
+target_include_directories(projekt_lib PUBLIC
+    src src/modell src/analyse src/quellen src/http src/server src/basis)
 # Header-only-Bibliotheken aus third_party/ (z. B. nlohmann/json). SYSTEM unterdrückt deren Warnungen,
 # PRIVATE: nur die .cpp-Dateien der Bibliothek brauchen sie, die eigenen Header nicht.
 target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
@@ -65,7 +73,7 @@ target_include_directories(projekt_lib SYSTEM PRIVATE third_party)
 # IAnfrageBehandler. Getrennt von projekt_lib, damit nur diese Datei die große httplib.h übersetzt.
 # Die Tests binden sie ein, um den Server über echte lokale Sockets zu prüfen (Parallelität, Beenden).
 # Dazu der Live-Client (LiveHttpClient), der httplib ebenfalls als Client nutzt.
-add_library(projekt_server src/http_server.cpp src/live_http_client.cpp)
+add_library(projekt_server src/server/http_server.cpp src/http/live_http_client.cpp)
 target_link_libraries(projekt_server PUBLIC projekt_lib)
 
 # Live-Zugriff über HTTPS (Standard AUS): nur dann wird OpenSSL gebraucht (Paket libssl-dev).

@@ -14,8 +14,8 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/trendindikatoren.hpp` | Declaration: the class `Trendindikatoren`, the type `Indikatorreihe`, the struct `MacdErgebnis` |
-| `src/trendindikatoren.cpp` | Implementation of all four indicators |
+| `src/analyse/trendindikatoren.hpp` | Declaration: the class `Trendindikatoren`, the type `Indikatorreihe`, the struct `MacdErgebnis` |
+| `src/analyse/trendindikatoren.cpp` | Implementation of all four indicators |
 | `tests/test_trendindikatoren.cpp` | 10 GoogleTest tests with hand-calculated reference values and error cases |
 | `CMakeLists.txt` | The new `.cpp` file was added to `projekt_lib`, the new test file to `tests` |
 

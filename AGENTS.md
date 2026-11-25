@@ -40,4 +40,12 @@ cmake -B build && cmake --build build && ctest --test-dir build
 <!-- Wichtige Klassen und Dateien, je eine Zeile. Mit dem Projekt mitwachsen lassen. -->
 
 - `src/main.cpp`: Einstiegspunkt
+- `src/modell/`: Datenmodell (Kursdaten, Zentralbank, Zinsentscheidung, Katalog)
+- `src/analyse/`: Berechnungen (Indikatoren, Risiko, Support/Resistance, Ereignisstudie)
+- `src/quellen/`: Datenquellen (Schnittstellen, Anbieter, Dateiquellen, Abruf)
+- `src/http/`: HTTP-Client und Festplatten-Cache
+- `src/server/`: Anfragebehandlung, Ergebnis-Cache, ThreadPool, HTTP-Server
+- `src/basis/`: Hilfen (Uhr, Umgebungsvariablen)
+- Includes ohne Ordnerangabe (`#include "kursdaten.hpp"`); alle Unterordner stehen im
+  Include-Pfad in `CMakeLists.txt`. Neue Dateien in den passenden Ordner legen.
 - `tests/`: GoogleTest-Tests

@@ -15,8 +15,8 @@ The code comments are in German (like the rest of the project); this text is in 
 
 | File | Purpose |
 |---|---|
-| `src/supportresistance.hpp` | Declaration: class `SupportResistance`, structs `Extremum`, `Niveau`, `PivotPunkte`, enums `ExtremumArt`, `NiveauArt` |
-| `src/supportresistance.cpp` | Implementation: extrema detection, clustering, pivot points |
+| `src/analyse/supportresistance.hpp` | Declaration: class `SupportResistance`, structs `Extremum`, `Niveau`, `PivotPunkte`, enums `ExtremumArt`, `NiveauArt` |
+| `src/analyse/supportresistance.cpp` | Implementation: extrema detection, clustering, pivot points |
 | `tests/test_supportresistance.cpp` | 16 tests with hand-checked expectations, special cases and errors |
 | `CMakeLists.txt` | New `.cpp` added to `projekt_lib`, new test file to `tests` |
 

@@ -26,10 +26,10 @@ This part needs **no external library**.
 
 | File | Purpose |
 |---|---|
-| `src/quellenfehler.hpp` | Error class hierarchy for all data sources |
-| `src/http_client.hpp` / `.cpp` | `HttpAntwort`, interface `IHttpClient`, function `pruefeStatus` |
-| `src/price_source.hpp` | Interface `IPriceSource` |
-| `src/umgebung.hpp` / `.cpp` | `leseApiSchluessel`: reads the API key from an environment variable |
+| `src/quellen/quellenfehler.hpp` | Error class hierarchy for all data sources |
+| `src/http/http_client.hpp` / `.cpp` | `HttpAntwort`, interface `IHttpClient`, function `pruefeStatus` |
+| `src/quellen/price_source.hpp` | Interface `IPriceSource` |
+| `src/basis/umgebung.hpp` / `.cpp` | `leseApiSchluessel`: reads the API key from an environment variable |
 | `tests/fake_http_client.hpp` | `FakeHttpClient`: test-only `IHttpClient` without a network |
 | `tests/test_quellen.cpp` | 14 tests |
 | `CMakeLists.txt` | the two new `.cpp` files and the test file are registered |
